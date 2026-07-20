@@ -380,6 +380,23 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
                     </div>
                 </div>
 
+                <!-- Tarjeta: Contactos -->
+                <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700">
+                    <h4 class="font-bold text-sm text-primary mb-4 border-b dark:border-gray-700 pb-2 flex items-center gap-2">👥 Contactos</h4>
+                    <div class="flex flex-col gap-3">
+                        <p class="text-xs text-gray-500">Gestiona la copia de seguridad de tus contactos compartidos.</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button onclick="exportContactsVCF()" class="w-full py-2 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 rounded font-medium hover:bg-indigo-200 transition-colors flex items-center justify-center gap-2 text-sm shadow-sm">
+                                ⬇ Exportar
+                            </button>
+                            <button onclick="document.getElementById('import-vcf-input').click()" class="w-full py-2 bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 rounded font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-2 text-sm shadow-sm">
+                                ⬆ Importar
+                            </button>
+                            <input type="file" id="import-vcf-input" accept=".vcf" class="hidden" onchange="importContactsVCF(event)">
+                        </div>
+                    </div>
+                </div>
+
 
 
             </div>
@@ -565,7 +582,7 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
                     placeholder="Buscar por nombre o teléfono..."
                     class="flex-1 border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent focus:ring focus:ring-indigo-200 dark:focus:ring-indigo-800 outline-none">
                 <button onclick="openModal('add-contact-modal')" class="bg-primary hover:bg-primaryHover text-white px-3 py-2 rounded text-sm font-bold shadow-sm transition-colors shrink-0" title="Añadir Contactos">
-                    + Añadir Contactos
+                    + Añadir Contacto
                 </button>
             </div>
             <div class="flex-1 overflow-y-auto pr-2" id="contacts-list">
@@ -674,7 +691,6 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
                 if (localData) {
                     const data = JSON.parse(localData);
                     if (data.events) events = data.events;
-                    if (data.contacts) contacts = data.contacts;
                     if (data.holidays) holidays = data.holidays;
                     if (data.settings) {
                         settings = data.settings;
@@ -683,6 +699,28 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
                         }
                     }
                     if (data.legendColors) legendColors = data.legendColors;
+                }
+                
+                let sharedContacts = localStorage.getItem('peluqueria_shared_contacts');
+                if (sharedContacts) {
+                    contacts = JSON.parse(sharedContacts);
+                } else {
+                    let cVero = [], cNuri = [];
+                    let dVero = localStorage.getItem('peluqueria_data_vero') || localStorage.getItem('peluqueria_data');
+                    let dNuri = localStorage.getItem('peluqueria_data_nuri');
+                    if (dVero) { try { cVero = JSON.parse(dVero).contacts || []; } catch(e){} }
+                    if (dNuri) { try { cNuri = JSON.parse(dNuri).contacts || []; } catch(e){} }
+                    let merged = [...cVero, ...cNuri];
+                    let unique = [];
+                    let names = new Set();
+                    merged.forEach(c => {
+                        if (c && c.name && !names.has(c.name.toLowerCase())) {
+                            names.add(c.name.toLowerCase());
+                            unique.push(c);
+                        }
+                    });
+                    contacts = unique;
+                    localStorage.setItem('peluqueria_shared_contacts', JSON.stringify(contacts));
                 }
             } catch (error) {
                 console.error("Error cargando de LocalStorage:", error);
@@ -758,6 +796,7 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
         async function saveState() {
             try {
                 localStorage.setItem(`peluqueria_data_${currentCalendar}`, JSON.stringify({ events, contacts, holidays, settings, legendColors }));
+                localStorage.setItem('peluqueria_shared_contacts', JSON.stringify(contacts));
             } catch (e) { console.error("Error guardando state", e); }
         }
 
@@ -1615,6 +1654,81 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
             }
         }
 
+        function exportContactsVCF() {
+            if (contacts.length === 0) {
+                showToast('No hay contactos para exportar', 'error');
+                return;
+            }
+            let vcfContent = '';
+            contacts.forEach(c => {
+                vcfContent += 'BEGIN:VCARD\n';
+                vcfContent += 'VERSION:3.0\n';
+                vcfContent += `FN:${c.name}\n`;
+                vcfContent += `TEL;TYPE=CELL:${c.phone}\n`;
+                vcfContent += 'END:VCARD\n';
+            });
+            const blob = new Blob([vcfContent], { type: 'text/vcard' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'contactos_peluqueria.vcf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Contactos exportados a VCF');
+        }
+
+        function importContactsVCF(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const lines = content.split('\n');
+                
+                let currentContact = null;
+                let importedCount = 0;
+                
+                lines.forEach(line => {
+                    line = line.trim();
+                    if (line.startsWith('BEGIN:VCARD')) {
+                        currentContact = {};
+                    } else if (line.startsWith('FN:')) {
+                        if (currentContact) currentContact.name = line.substring(3).trim();
+                    } else if (line.startsWith('TEL')) {
+                        if (currentContact) {
+                            const parts = line.split(':');
+                            if (parts.length > 1) {
+                                currentContact.phone = parts[parts.length - 1].trim();
+                            }
+                        }
+                    } else if (line.startsWith('END:VCARD')) {
+                        if (currentContact && currentContact.name && currentContact.phone) {
+                            const exist = contacts.find(c => c.name.toLowerCase() === currentContact.name.toLowerCase());
+                            if (!exist) {
+                                contacts.push({ name: currentContact.name, phone: currentContact.phone });
+                                importedCount++;
+                            }
+                        }
+                        currentContact = null;
+                    }
+                });
+                
+                if (importedCount > 0) {
+                    saveState();
+                    updateContactsList();
+                    showToast(`${importedCount} contactos importados con éxito.`);
+                } else {
+                    showToast('No se encontraron nuevos contactos para importar.', 'error');
+                }
+                
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
         // --- STREAMING_CHUNK:Settings & Background Image ---
         function applySettings() {
             if (settings.darkMode) document.documentElement.classList.add('dark');
@@ -1694,6 +1808,7 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
         async function finalizeSave() {
             try {
                 localStorage.setItem(`peluqueria_data_${currentCalendar}`, JSON.stringify({ events, contacts, holidays, settings, legendColors }));
+                localStorage.setItem('peluqueria_shared_contacts', JSON.stringify(contacts));
             } catch (e) { console.error("Error guardando settings", e); }
 
             applySettings();
@@ -1855,7 +1970,7 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
             openModal, closeModal, toggleView, changeDate, goToday, changeMiniMonth, goToWeekFromMini,
             handleSlotClick, handleMonthDayClick, saveEvent, openEventCard, editEventFromAction, deleteEventFromAction,
             sendWAFromAction, openDayActionModal, toggleHoliday, sendBulkWA, openCustomRangeModal, saveCustomRange,
-            filterContacts, updateContactsList, deleteContact, editContact, saveEditContact, addNewContact, toggleDarkMode, toggleWeekends, saveSettings, updateBgColor, clearBgColor,
+            filterContacts, updateContactsList, deleteContact, editContact, saveEditContact, addNewContact, exportContactsVCF, importContactsVCF, toggleDarkMode, toggleWeekends, saveSettings, updateBgColor, clearBgColor,
             toggleSidebar, changeZoom, toggleCalendar
         });
     </script>
