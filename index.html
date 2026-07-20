@@ -729,9 +729,6 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
 
         const views = ['day', 'week', 'month'];
         let currentViewIndex = 1; // 1 = week
-        if (window.innerWidth < 768) {
-            currentViewIndex = 0; // Default to 'day' on mobile
-        }
         let currentDate = new Date();
         let miniCalendarDate = new Date();
 
@@ -755,6 +752,7 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
             const v = views[currentViewIndex];
             if (btn) btn.innerText = `Vista: ${v === 'day' ? 'Día' : v === 'week' ? 'Semana' : 'Mes'}`;
 
+            changeZoom(0); // Aplicar el zoom por defecto
             renderCalendar();
             renderMiniCalendar();
             updateContactsList();
@@ -1832,7 +1830,7 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
             }
         }
 
-        let currentZoom = 1;
+        let currentZoom = 0.9;
         function changeZoom(delta) {
             currentZoom += delta;
             if (currentZoom < 0.5) currentZoom = 0.5;
