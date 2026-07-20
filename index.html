@@ -1,1 +1,1814 @@
+<!DOCTYPE html>
+<html lang="es">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mi Calendario Personalizado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        window.tailwind = {
+            config: {
+                darkMode: 'class',
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: '#4f46e5',
+                            primaryHover: '#4338ca'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .font-title {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .bg-custom-image {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+        }
+
+        #app-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            transition: background-color 0.3s ease;
+        }
+
+        .dark #app-container {
+            background-color: rgba(31, 41, 55, 0.95);
+        }
+
+        .event-label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Prevenir zoom en dispositivos móviles */
+        * {
+            touch-action: manipulation;
+        }
+
+        @media screen and (max-width: 767px) {
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+</head>
+
+<body
+    class="h-screen w-screen overflow-hidden bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors">
+    <!-- Fondo Dinámico -->
+    <div id="bg-layer" class="bg-custom-image hidden"></div>
+
+    <!-- Pantalla de Login eliminada -->
+
+    <div id="app-container" class="flex h-full w-full relative z-10 backdrop-blur-sm overflow-hidden">
+
+        <!-- Overlay oscuro para móvil -->
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden">
+        </div>
+
+        <!-- Barra Lateral Estrecha -->
+        <aside id="sidebar"
+            class="w-52 border-r border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 flex-col backdrop-blur-md fixed md:relative z-40 h-full shadow-2xl md:shadow-none transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex">
+            <div class="p-4 flex flex-col gap-4 h-full">
+                <!-- Bloque agrupado de botones superiores -->
+                <div class="flex flex-col gap-2">
+                    <!-- Botón de Contactos -->
+                    <button onclick="openModal('contacts-modal')"
+                        class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2.5 rounded-xl font-semibold shadow-md hover:shadow-lg hover:from-blue-600 hover:to-indigo-700 transition-all text-sm flex items-center justify-center gap-2">
+                        <span class="text-lg">👥</span> Contactos
+                    </button>
+
+                    <!-- Botón Leyenda Colores -->
+                    <button onclick="openLegendModal()"
+                        class="w-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white py-2.5 rounded-xl font-semibold shadow-md hover:shadow-lg hover:from-teal-600 hover:to-emerald-700 transition-all text-sm flex items-center justify-center gap-2">
+                        <span class="text-lg">🎨</span> Leyenda Colores
+                    </button>
+
+                    <!-- Botón Alternar Calendario -->
+                    <button id="btn-toggle-calendar" onclick="toggleCalendar()"
+                        class="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white py-2.5 rounded-xl font-semibold shadow-md hover:shadow-lg hover:from-purple-600 hover:to-pink-700 transition-all text-sm flex items-center justify-center gap-2">
+                        <span class="text-lg">📅</span> CALENDARIO VERO
+                    </button>
+
+
+                </div>
+
+                <!-- Mini-Calendario -->
+                <div
+                    class="flex-1 mt-2 mb-2 flex flex-col min-h-0 bg-white dark:bg-gray-800 rounded-lg p-2 shadow-sm border border-gray-100 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-2">
+                        <button onclick="changeMiniMonth(-1)"
+                            class="text-gray-500 hover:text-primary px-2 font-bold">&lt;</button>
+                        <span id="mini-month-display"
+                            class="text-[11px] font-bold capitalize text-gray-700 dark:text-gray-300"></span>
+                        <button onclick="changeMiniMonth(1)"
+                            class="text-gray-500 hover:text-primary px-2 font-bold">&gt;</button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-[9px] text-center font-bold text-gray-400 mb-1" id="mini-calendar-header">
+                        <div>L</div>
+                        <div>M</div>
+                        <div>X</div>
+                        <div>J</div>
+                        <div>V</div>
+                        <div>S</div>
+                        <div>D</div>
+                    </div>
+                    <div id="mini-calendar-grid" class="grid grid-cols-7 gap-1 flex-1 content-start">
+                        <!-- Inyectado por JS -->
+                    </div>
+                </div>
+
+                <div class="mt-auto flex flex-col gap-3">
+                    <!-- Tarjeta de Información -->
+                    <button onclick="openModal('info-modal')"
+                        class="w-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 py-2 rounded-xl font-bold shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all text-sm flex items-center justify-center gap-2 border border-emerald-200 dark:border-emerald-700">
+                        <span class="text-lg">ℹ️</span> Ayuda e Info
+                    </button>
+
+                    <!-- Botón de Ajustes -->
+                    <button onclick="openModal('settings-modal')"
+                        class="w-full bg-gradient-to-r from-slate-600 to-gray-700 text-white py-2.5 rounded-xl font-semibold shadow-md hover:shadow-lg hover:from-slate-700 hover:to-gray-800 transition-all text-sm flex items-center justify-center gap-2">
+                        <span class="text-lg">⚙️</span> Ajustes
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col relative h-full">
+            <header
+                class="h-16 shadow-sm border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 z-10 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md">
+                <div class="flex items-center gap-1 md:gap-3">
+                    <!-- Hamburger Menu Mobile -->
+                    <button onclick="toggleSidebar()"
+                        class="md:hidden p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                    <!-- Botón de Vista a la Izquierda -->
+                    <button id="view-toggle-btn" onclick="toggleView()"
+                        class="px-2 md:px-3 py-1.5 text-[10px] md:text-xs bg-primary hover:bg-primaryHover text-white rounded-lg font-semibold shadow-md transition-all active:scale-95 w-20 md:w-24 text-center">
+                        Vista: Semana
+                    </button>
+
+                    <!-- Tarjeta de Zoom -->
+                    <div class="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-0.5 shadow-sm flex items-center border border-indigo-200 dark:border-indigo-700 hidden sm:flex mx-1">
+                        <span class="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 mx-1">🔍 Zoom</span>
+                        <div class="flex items-center gap-1">
+                            <button onclick="changeZoom(-0.1)" class="w-6 h-6 flex items-center justify-center bg-white dark:bg-gray-700 rounded shadow-sm text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold transition-colors text-lg leading-none">-</button>
+                            <button onclick="changeZoom(0.1)" class="w-6 h-6 flex items-center justify-center bg-white dark:bg-gray-700 rounded shadow-sm text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold transition-colors text-lg leading-none">+</button>
+                        </div>
+                    </div>
+
+                    <div class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+
+                    <button onclick="changeDate(-1)"
+                        class="p-1 md:p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-600 dark:text-gray-300">&lt;</button>
+                    <h2 id="current-date-display"
+                        class="text-sm md:text-lg font-bold text-gray-800 dark:text-gray-100 capitalize min-w-[130px] md:min-w-[180px] text-center">
+                    </h2>
+                    <button onclick="changeDate(1)"
+                        class="p-1 md:p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-600 dark:text-gray-300">&gt;</button>
+                    <button id="btn-go-today" onclick="goToday()"
+                        class="ml-1 md:ml-2 px-2 md:px-3 py-1 text-[10px] md:text-xs bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md transition-colors font-medium">Hoy</button>
+                </div>
+                <div class="flex-1 flex justify-center items-center gap-6 hidden lg:flex">
+                    <span id="main-calendar-title" class="text-2xl font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-blue-600 dark:from-indigo-400 dark:to-blue-400 tracking-widest drop-shadow-sm uppercase">CALENDARIO VERO</span>
+                </div>
+            </header>
+
+            <!-- Contenedor del Calendario -->
+            <div id="calendar-container" class="flex-1 p-2 overflow-hidden flex flex-col bg-transparent">
+                <!-- Se inyecta la vista aquí -->
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALES -->
+
+    <!-- Modal de Información -->
+    <div id="info-modal"
+        class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto relative">
+            <button onclick="closeModal('info-modal')" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 text-2xl font-bold">&times;</button>
+            <h3 id="info-calendar-title" class="text-2xl font-bold mb-4 text-emerald-700 dark:text-emerald-400">ℹ️ ¿Cómo funciona Calendario VERO?</h3>
+            
+            <div class="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+                <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700">
+                    <h4 class="font-bold text-lg mb-2 text-primary">📅 Las Vistas (Día, Semana, Mes)</h4>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li><strong>Vista Día y Semana:</strong> Puedes hacer clic en cualquier recuadro horario libre para <strong>crear un nuevo evento</strong>. Si haces clic en la cabecera de un día específico, se abrirán las <strong>Opciones Rápidas</strong> (bloquear franjas, enviar recordatorios masivos o marcar festivos). La cuadrícula tiene <strong>filas intercaladas (blanco/gris)</strong> para guiar la vista fácilmente.</li>
+                        <li><strong>Vista Mes:</strong> Muestra un resumen general. Haz clic en cualquier recuadro de un día para ir rápidamente a su vista detallada.</li>
+                        <li><strong>Zoom:</strong> El panel "🔍 Zoom" de la barra lateral ajusta el tamaño visual para mostrarte más o menos horas en pantalla.</li>
+                    </ul>
+                </div>
+
+                <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700">
+                    <h4 class="font-bold text-lg mb-2 text-primary">📝 Crear y Editar Eventos</h4>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>Al agendar una cita, los datos se guardan en tus <strong>Contactos</strong> automáticamente. Si el cliente ya existe, al escribir su nombre <strong>se autocompletará</strong>.</li>
+                        <li>Para <strong>Editar o Eliminar</strong>, haz clic sobre el evento en el calendario. Allí también podrás enviarle un <strong>Recordatorio</strong> por WhatsApp. Al pulsar "✏️ Editar", la aplicación <strong>solo</strong> te permite modificar las <span class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-1 rounded font-bold">Observaciones</span>. Aparecerá un <span class="inline-flex items-center justify-center w-4 h-4 bg-yellow-400 text-yellow-900 rounded-full text-[10px] font-black border border-yellow-500 align-text-bottom shadow-sm">!</span> si has escrito notas.</li>
+                    </ul>
+                </div>
+
+                <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700">
+                    <h4 class="font-bold text-lg mb-2 text-primary">🛠️ Otras Funcionalidades</h4>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li><strong>Contactos:</strong> Busca, añade, edita o elimina clientes. Aparecerá una doble confirmación antes de borrarlos para evitar errores.</li>
+                        <li><strong>Leyenda Colores:</strong> Puedes crear y gestionar distintos tipos de citas, asignándoles colores y tiempos por defecto.</li>
+                        <li><strong>Calendarios:</strong> Pulsa el botón principal para alternar entre el calendario de <strong>VERO</strong> y el de <strong>NURI</strong>, manteniendo la información separada para cada una.</li>
+                        <li><strong>Ajustes:</strong> Organizados por <em>Aspecto Visual</em> (Modo Oscuro, fondo), <em>Horarios</em> (Hora Inicio/Fin, Descansos, ocultar/mostrar domingo y lunes, duración de la celda) y <em>Comunicación</em> (Mensaje de WhatsApp).</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeModal('info-modal')" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-md transition-colors text-sm">Entendido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Ajustes -->
+    <div id="settings-modal"
+        class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-bold mb-4">⚙️ Ajustes del Calendario</h3>
+            <div class="space-y-4">
+                
+                <!-- Tarjeta: Aspecto Visual -->
+                <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700">
+                    <h4 class="font-bold text-sm text-primary mb-4 border-b dark:border-gray-700 pb-2 flex items-center gap-2">🎨 Aspecto Visual</h4>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <label class="font-medium text-sm">Modo Oscuro</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="dark-mode-toggle" onchange="toggleDarkMode()" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <label class="font-medium text-sm">Color de fondo</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="bg-color-picker" onchange="updateBgColor()" class="w-8 h-8 p-0 border dark:border-gray-600 rounded cursor-pointer bg-transparent" title="Elegir color">
+                                <button onclick="clearBgColor()" class="text-[10px] text-red-500 hover:underline">Quitar color</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta: Horarios y Cuadrícula -->
+                <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700">
+                    <h4 class="font-bold text-sm text-primary mb-4 border-b dark:border-gray-700 pb-2 flex items-center gap-2">⏱️ Horarios y Cuadrícula</h4>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <label class="font-medium text-sm">Mostrar Domingo y Lunes</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="show-weekends-toggle" onchange="toggleWeekends()" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Hora Inicio</label>
+                                <select id="time-start"
+                                    class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent"></select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Hora Fin</label>
+                                <select id="time-end"
+                                    class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent"></select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Descanso (Inicio)</label>
+                                <select id="break-start"
+                                    class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent"></select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Descanso (Fin)</label>
+                                <select id="break-end"
+                                    class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent"></select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Intervalo (Minutos)</label>
+                            <select id="time-interval"
+                                class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent">
+                                <option value="15">15 Minutos</option>
+                                <option value="30">30 Minutos</option>
+                                <option value="60">1 Hora</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta: Comunicación -->
+                <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700">
+                    <h4 class="font-bold text-sm text-primary mb-4 border-b dark:border-gray-700 pb-2 flex items-center gap-2">💬 Comunicación</h4>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Mensaje WhatsApp predeterminado</label>
+                        <p class="text-[10px] text-gray-500 mb-2">Usa {fecha} y {hora} para variables dinámicas.</p>
+                        <textarea id="wa-message" rows="2"
+                            class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent">Hola, te recuerdo tu cita el día {fecha} a las {hora}.</textarea>
+                    </div>
+                </div>
+
+
+
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal('settings-modal')"
+                    class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg text-sm">Cancelar</button>
+                <button onclick="saveSettings()" class="px-4 py-2 bg-primary text-white rounded-lg text-sm">Guardar
+                    Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Leyenda Colores -->
+    <div id="legend-modal" class="fixed inset-0 bg-black/50 hidden z-[60] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6 max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">🎨 Leyenda de Colores</h3>
+                <button onclick="closeModal('legend-modal')" class="text-gray-500 hover:text-red-500 text-xl font-bold">&times;</button>
+            </div>
+            
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="new-legend-name" placeholder="Nuevo tipo..." class="flex-1 border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent focus:ring focus:ring-primary outline-none">
+                <input type="number" id="new-legend-duration" placeholder="Min" class="w-16 border dark:border-gray-600 rounded px-2 py-2 text-sm bg-transparent focus:ring focus:ring-primary outline-none" title="Duración en minutos (opcional)">
+                <input type="color" id="new-legend-color" value="#3b82f6" class="w-10 h-10 p-0.5 border dark:border-gray-600 rounded cursor-pointer bg-transparent">
+                <button onclick="addLegendColor()" class="bg-primary hover:bg-primaryHover text-white px-4 py-2 rounded text-sm font-bold shadow-sm transition-colors">Añadir</button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto pr-2 space-y-2" id="legend-list">
+                <!-- Inyectado por JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Evento -->
+    <div id="event-modal"
+        class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm p-6 relative">
+            <h3 class="text-lg font-bold mb-4" id="event-modal-title">Nuevo Evento</h3>
+            
+            <!-- Selector de tipo / color -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Tipo de Cita</label>
+                <div id="event-type-selector" class="flex flex-wrap gap-2">
+                    <!-- Inyectado por JS -->
+                </div>
+                <input type="hidden" id="ev-color" value="">
+            </div>
+            
+
+            <div class="space-y-3 relative">
+                <div class="relative">
+                    <label id="ev-name-label" class="block text-sm font-medium mb-1">Nombre</label>
+                    <input type="text" id="ev-name" autocomplete="off" onkeyup="filterContacts(this.value)"
+                        onfocus="filterContacts(this.value)"
+                        class="w-full border-2 border-gray-300 dark:border-gray-500 rounded px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                    <div id="autocomplete-list"
+                        class="absolute z-50 w-full bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-b shadow-lg hidden max-h-32 overflow-y-auto mt-1 text-sm">
+                    </div>
+                </div>
+                <div id="ev-phone-container">
+                    <label class="block text-sm font-medium mb-1">Teléfono</label>
+                    <input type="tel" id="ev-phone"
+                        class="w-full border-2 border-gray-300 dark:border-gray-500 rounded px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Observaciones <span class="text-xs text-gray-400 font-normal">(opcional)</span></label>
+                    <textarea id="ev-obs" rows="2"
+                        class="w-full border-2 border-gray-300 dark:border-gray-500 rounded px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"></textarea>
+                </div>
+                <!-- Campos ocultos para mantener info -->
+                <input type="hidden" id="ev-id">
+                <input type="hidden" id="ev-date">
+                <input type="hidden" id="ev-time">
+                <input type="hidden" id="ev-endtime">
+            </div>
+            <div class="mt-5 flex justify-end gap-2">
+                <button onclick="closeModal('event-modal')"
+                    class="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 rounded text-sm">Cancelar</button>
+                <button onclick="saveEvent()" class="px-3 py-1.5 bg-primary text-white rounded text-sm">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Acción Evento (Tarjeta rápida) -->
+    <div id="event-action-modal"
+        class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-xs p-5 text-center">
+            <h3 class="text-xl font-bold mb-1" id="action-ev-name">Nombre</h3>
+            <p class="text-xs text-gray-500 mb-4" id="action-ev-time">Hora</p>
+
+            <div class="flex flex-col gap-2">
+                <button id="action-btn-wa" onclick="sendWAFromAction()"
+                    class="w-full py-2 bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 rounded font-medium hover:bg-green-200 transition-colors">💬
+                    Enviar recordatorio</button>
+                <button id="action-btn-edit" onclick="editEventFromAction()"
+                    class="w-full py-2 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 rounded font-medium hover:bg-blue-200 transition-colors">✏️
+                    Editar</button>
+                <button onclick="deleteEventFromAction()"
+                    class="w-full py-2 bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 rounded font-medium hover:bg-red-200 transition-colors">🗑️
+                    Eliminar</button>
+            </div>
+
+            <div id="action-ev-obs-container"
+                class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded text-left hidden">
+                <p class="text-xs font-bold text-yellow-800 dark:text-yellow-400 mb-1">Observaciones:</p>
+                <p class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap" id="action-ev-obs"></p>
+            </div>
+
+            <button onclick="closeModal('event-action-modal')"
+                class="mt-4 text-xs text-gray-400 hover:text-gray-600 underline">Cerrar</button>
+        </div>
+    </div>
+
+
+
+    <!-- Modal Acción Día -->
+    <div id="day-action-modal"
+        class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-xs p-5 text-center">
+            <h3 class="text-lg font-bold mb-4" id="day-action-title">Opciones del Día</h3>
+            <div class="flex flex-col gap-2">
+                <button onclick="sendBulkWA()"
+                    class="w-full py-2 bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 rounded font-medium hover:bg-green-200 transition-colors">💬
+                    Enviar recordatorios</button>
+                <button onclick="openCustomRangeModal()"
+                    class="w-full py-2 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 rounded font-medium hover:bg-indigo-200 transition-colors">⏳
+                    Personalizar</button>
+                <button onclick="toggleHoliday()"
+                    class="w-full py-2 bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 rounded font-medium hover:bg-red-200 transition-colors">🏖️
+                    Día Festivo</button>
+            </div>
+            <button onclick="closeModal('day-action-modal')"
+                class="mt-4 text-xs text-gray-400 hover:text-gray-600 underline">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal Rango Personalizado -->
+    <div id="custom-range-modal"
+        class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm p-6 relative">
+            <h3 class="text-lg font-bold mb-4">Personalizar / Bloquear Horario</h3>
+            <div class="space-y-3 relative">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Título</label>
+                    <input type="text" id="cr-name"
+                        class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent"
+                        placeholder="Reunión, Cirugía, Ausencia...">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Desde</label>
+                        <select id="cr-start"
+                            class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent"></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Hasta</label>
+                        <select id="cr-end"
+                            class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent"></select>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 flex justify-end gap-2">
+                <button onclick="closeModal('custom-range-modal')"
+                    class="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 rounded text-sm">Cancelar</button>
+                <button onclick="saveCustomRange()"
+                    class="px-3 py-1.5 bg-primary text-white rounded text-sm">Generar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Contactos -->
+    <div id="contacts-modal"
+        class="fixed inset-0 bg-black/50 hidden z-[60] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6 max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Mis Contactos</h3>
+                <button onclick="closeModal('contacts-modal')"
+                    class="text-gray-500 hover:text-red-500 text-xl font-bold">&times;</button>
+            </div>
+            <!-- Nuevo buscador añadido aquí -->
+            <div class="mb-3 flex gap-2">
+                <input type="text" id="contact-search-input" onkeyup="updateContactsList()"
+                    placeholder="Buscar por nombre o teléfono..."
+                    class="flex-1 border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent focus:ring focus:ring-indigo-200 dark:focus:ring-indigo-800 outline-none">
+                <button onclick="openModal('add-contact-modal')" class="bg-primary hover:bg-primaryHover text-white px-3 py-2 rounded text-sm font-bold shadow-sm transition-colors shrink-0" title="Añadir Contactos">
+                    + Añadir Contactos
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto pr-2" id="contacts-list">
+                <!-- Inyectado por JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Añadir Contacto -->
+    <div id="add-contact-modal" class="fixed inset-0 bg-black/50 hidden z-[70] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm p-6 relative">
+            <h3 class="text-lg font-bold mb-4">+ Añadir Contacto</h3>
+            <div class="space-y-3 relative">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Nombre</label>
+                    <input type="text" id="new-contact-name" class="w-full border-2 border-gray-300 dark:border-gray-500 rounded px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Teléfono</label>
+                    <input type="tel" id="new-contact-phone" class="w-full border-2 border-gray-300 dark:border-gray-500 rounded px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+            </div>
+            <div class="mt-5 flex justify-end gap-2">
+                <button onclick="closeModal('add-contact-modal')" class="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 rounded text-sm">Cancelar</button>
+                <button onclick="addNewContact()" class="px-3 py-1.5 bg-primary text-white rounded text-sm">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Contacto -->
+    <div id="edit-contact-modal"
+        class="fixed inset-0 bg-black/50 hidden z-[70] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm p-6 relative">
+            <h3 class="text-lg font-bold mb-4">Editar Contacto</h3>
+            <div class="space-y-3 relative">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Nombre</label>
+                    <input type="text" id="edit-contact-name"
+                        class="w-full border-2 border-gray-300 dark:border-gray-500 rounded px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Teléfono</label>
+                    <input type="tel" id="edit-contact-phone"
+                        class="w-full border-2 border-gray-300 dark:border-gray-500 rounded px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+                <input type="hidden" id="edit-contact-index">
+            </div>
+            <div class="mt-5 flex justify-end gap-2">
+                <button onclick="closeModal('edit-contact-modal')"
+                    class="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 rounded text-sm">Cancelar</button>
+                <button onclick="saveEditContact()"
+                    class="px-3 py-1.5 bg-primary text-white rounded text-sm">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast"
+        class="fixed bottom-5 right-5 px-4 py-2 rounded shadow-lg text-white font-medium transition-opacity duration-300 opacity-0 pointer-events-none z-[100]">
+        Mensaje
+    </div>
+
+    <script type="module">
+        // Firebase configuration removed for Peluqueria project
+
+        let currentCalendar = 'vero';
+
+        let events = [];
+        let contacts = [];
+        let holidays = [];
+        let legendColors = [];
+
+        let settings = {};
+
+        function loadCalendarData() {
+            events = [];
+            contacts = [];
+            holidays = [];
+            legendColors = [
+                { id: '1', name: 'Visita', color: '#3b82f6', duration: 30 },
+                { id: '2', name: 'Pesar', color: '#f97316', duration: 15 },
+                { id: '3', name: '1ª visita', color: '#eab308', duration: 60 },
+                { id: '4', name: 'Recoger dieta', color: '#166534', duration: 15 }
+            ];
+            settings = {
+                showWeekends: true,
+                darkMode: false,
+                bgColor: '',
+                start: '09:00',
+                end: '20:00',
+                breakStart: '',
+                breakEnd: '',
+                interval: 30,
+                waMessage: 'Hola, te recuerdo tu cita el día {fecha} a las {hora}.'
+            };
+
+            try {
+                let localData = localStorage.getItem(`peluqueria_data_${currentCalendar}`);
+                if (!localData && currentCalendar === 'vero') {
+                    localData = localStorage.getItem('peluqueria_data');
+                    if (localData) {
+                        localStorage.setItem('peluqueria_data_vero', localData);
+                    }
+                }
+
+                if (localData) {
+                    const data = JSON.parse(localData);
+                    if (data.events) events = data.events;
+                    if (data.contacts) contacts = data.contacts;
+                    if (data.holidays) holidays = data.holidays;
+                    if (data.settings) settings = data.settings;
+                    if (data.legendColors) legendColors = data.legendColors;
+                }
+            } catch (error) {
+                console.error("Error cargando de LocalStorage:", error);
+            }
+        }
+
+        const views = ['day', 'week', 'month'];
+        let currentViewIndex = 1; // 1 = week
+        if (window.innerWidth < 768) {
+            currentViewIndex = 0; // Default to 'day' on mobile
+        }
+        let currentDate = new Date();
+        let miniCalendarDate = new Date();
+
+        let slots = [];
+        let editingEventId = null;
+        let actionEventId = null;
+        let selectedDateForAction = null;
+
+        function getLocalISODate(d) {
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        }
+
+        window.onload = async () => {
+            loadCalendarData();
+            populateTimeSelects();
+            applySettings();
+            generateSlots();
+
+            // Sincronizar el texto del botón con la vista inicial
+            const btn = document.getElementById('view-toggle-btn');
+            const v = views[currentViewIndex];
+            if (btn) btn.innerText = `Vista: ${v === 'day' ? 'Día' : v === 'week' ? 'Semana' : 'Mes'}`;
+
+            renderCalendar();
+            renderMiniCalendar();
+            updateContactsList();
+
+            // Auto-refresh silenciado temporalmente hasta nuevo Firebase
+            /*
+            setInterval(async () => {
+                try {
+                    const docRef = doc(db, 'app_data', 'main');
+                    const snap = await getDoc(docRef);
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        if (data.events) events = data.events;
+                        if (data.holidays) holidays = data.holidays;
+                        renderCalendar();
+                    }
+                } catch (error) {
+                    console.error("Error en auto-refresh:", error);
+                }
+            }, 60000);
+            */
+        };
+
+        function populateTimeSelects() {
+            const selects = ['time-start', 'time-end', 'break-start', 'break-end'];
+            let options = '<option value="">Ninguno</option>';
+            for (let h = 0; h < 24; h++) {
+                for (let m = 0; m < 60; m += 30) {
+                    const time = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                    options += `<option value="${time}">${time}</option>`;
+                }
+            }
+            selects.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = id.includes('break') ? options : options.replace('<option value="">Ninguno</option>', '');
+            });
+        }
+
+        async function saveState() {
+            try {
+                localStorage.setItem(`peluqueria_data_${currentCalendar}`, JSON.stringify({ events, contacts, holidays, settings, legendColors }));
+            } catch (e) { console.error("Error guardando state", e); }
+        }
+
+        function toggleCalendar() {
+            currentCalendar = currentCalendar === 'vero' ? 'nuri' : 'vero';
+            
+            const btn = document.getElementById('btn-toggle-calendar');
+            if (btn) {
+                btn.innerHTML = `<span class="text-lg">📅</span> CALENDARIO ${currentCalendar.toUpperCase()}`;
+            }
+
+            const mainTitle = document.getElementById('main-calendar-title');
+            if (mainTitle) {
+                mainTitle.innerText = `CALENDARIO ${currentCalendar.toUpperCase()}`;
+            }
+            
+            const infoTitle = document.getElementById('info-calendar-title');
+            if (infoTitle) {
+                infoTitle.innerText = `ℹ️ ¿Cómo funciona Calendario ${currentCalendar.toUpperCase()}?`;
+            }
+
+            loadCalendarData();
+            
+            applySettings();
+            generateSlots();
+            renderCalendar();
+            renderMiniCalendar();
+            updateContactsList();
+            
+            showToast(`Cambiado a CALENDARIO ${currentCalendar.toUpperCase()}`);
+        }
+
+        // --- STREAMING_CHUNK:Utilities ---
+        function showToast(msg, type = 'info') {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.className = `fixed bottom-5 right-5 px-4 py-2 rounded shadow-lg text-white font-medium transition-opacity duration-300 z-[100] ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+            t.classList.remove('opacity-0');
+            setTimeout(() => t.classList.add('opacity-0'), 3000);
+        }
+
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
+        function getContrastYIQ(hexcolor){
+            if (!hexcolor) return 'white';
+            hexcolor = hexcolor.replace("#", "");
+            if (hexcolor.length === 3) {
+                hexcolor = hexcolor.split('').map(c => c + c).join('');
+            }
+            if (hexcolor.length !== 6) return 'white';
+            var r = parseInt(hexcolor.substr(0,2),16);
+            var g = parseInt(hexcolor.substr(2,2),16);
+            var b = parseInt(hexcolor.substr(4,2),16);
+            var yiq = ((r*299)+(g*587)+(b*114))/1000;
+            return (yiq >= 128) ? '#111827' : 'white';
+        }
+
+        function isPastEvent(dateStr, timeStr) {
+            const [y, m, d] = dateStr.split('-');
+            const [h, min] = timeStr.split(':');
+            const evDate = new Date(y, m - 1, d, h, min);
+            return evDate < new Date();
+        }
+
+        // --- STREAMING_CHUNK:Calendar Logic ---
+        function generateSlots() {
+            slots = [];
+            let [hS, mS] = settings.start.split(':').map(Number);
+            let [hE, mE] = settings.end.split(':').map(Number);
+
+            let breakS = null, breakE = null;
+            if (settings.breakStart && settings.breakEnd) {
+                breakS = parseInt(settings.breakStart.split(':')[0]) * 60 + parseInt(settings.breakStart.split(':')[1]);
+                breakE = parseInt(settings.breakEnd.split(':')[0]) * 60 + parseInt(settings.breakEnd.split(':')[1]);
+            }
+
+            let current = hS * 60 + mS;
+            let end = hE * 60 + mE;
+            let step = parseInt(settings.interval);
+
+            while (current < end) {
+                if (breakS !== null && breakE !== null && current >= breakS && current < breakE) {
+                    current += step;
+                    continue;
+                }
+                let h = Math.floor(current / 60);
+                let m = current % 60;
+                slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+                current += step;
+            }
+        }
+
+        function hasBreakGap(index) {
+            if (index <= 0) return false;
+            let [ph, pm] = slots[index - 1].split(':').map(Number);
+            let [ch, cm] = slots[index].split(':').map(Number);
+            return (ch * 60 + cm) - (ph * 60 + pm) > parseInt(settings.interval);
+        }
+
+        function toggleView() {
+            currentViewIndex = (currentViewIndex + 1) % 3;
+            const viewNames = ['Día', 'Semana', 'Mes'];
+            document.getElementById('view-toggle-btn').innerText = `Vista: ${viewNames[currentViewIndex]}`;
+            renderCalendar();
+        }
+
+        function changeDate(dir) {
+            const view = views[currentViewIndex];
+            if (view === 'day') currentDate.setDate(currentDate.getDate() + dir);
+            else if (view === 'week') currentDate.setDate(currentDate.getDate() + (dir * 7));
+            else if (view === 'month') currentDate.setMonth(currentDate.getMonth() + dir);
+            renderCalendar();
+            miniCalendarDate = new Date(currentDate);
+            renderMiniCalendar();
+        }
+
+        function goToday() {
+            currentDate = new Date();
+            renderCalendar();
+            miniCalendarDate = new Date(currentDate);
+            renderMiniCalendar();
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // --- STREAMING_CHUNK:Rendering Main Views ---
+        function renderCalendar() {
+            const container = document.getElementById('calendar-container');
+            const dateDisplay = document.getElementById('current-date-display');
+            const view = views[currentViewIndex];
+
+            const formatter = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric', day: view === 'day' ? 'numeric' : undefined });
+            let displayStr = formatter.format(currentDate);
+            if (view === 'week') {
+                const start = new Date(currentDate);
+                const day = start.getDay();
+                start.setDate(start.getDate() - day + (day === 0 ? -6 : 1));
+                const end = new Date(start);
+                end.setDate(end.getDate() + 6);
+                displayStr = `${start.getDate()} ${start.toLocaleString('es-ES', { month: 'short' })} - ${end.getDate()} ${end.toLocaleString('es-ES', { month: 'short' })}`;
+            }
+            dateDisplay.innerText = displayStr;
+
+            if (view === 'day') renderDayView(container);
+            else if (view === 'week') renderWeekView(container);
+            else renderMonthView(container);
+        }
+
+        function renderDayView(container) {
+            const dateStr = getLocalISODate(currentDate);
+            const isToday = dateStr === getLocalISODate(new Date());
+            const isHoliday = holidays.includes(dateStr);
+            const wNum = getWeekNumber(currentDate);
+            const dayEvents = events.filter(e => e.dateStr === dateStr);
+
+            let html = `
+                <div class="flex flex-col h-full bg-white dark:bg-gray-800 rounded-lg shadow border dark:border-gray-700">
+                    <div class="flex border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                        <div class="w-12 border-r border-indigo-700 dark:border-indigo-500 bg-indigo-600 text-white flex flex-col items-center justify-center shadow-inner">
+                            <span class="text-[8px] uppercase tracking-wider opacity-80">Semana</span>
+                            <span class="text-sm font-bold">${wNum}</span>
+                        </div>
+                        <div class="flex-1 p-1 text-center cursor-pointer transition-all ${isToday && !isHoliday ? 'bg-indigo-600 text-white shadow-inner' : 'hover:bg-gray-100 dark:hover:bg-gray-700'} ${isHoliday ? 'bg-red-500 text-white dark:bg-red-700' : ''}" onclick="openDayActionModal('${dateStr}')">
+                            <span class="font-bold block capitalize text-lg ${isToday && !isHoliday ? 'text-white' : ''}">${currentDate.toLocaleDateString('es-ES', { weekday: 'long' })}</span>
+                            <span class="text-sm font-bold ${isToday && !isHoliday ? 'text-indigo-100' : (isHoliday ? 'text-red-100' : 'text-gray-500')}">${currentDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 flex overflow-hidden">
+                        <div class="w-12 border-r dark:border-gray-700 flex flex-col">
+                            ${slots.map((time, i) => `<div class="flex-1 border-b dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center justify-center min-h-[1.5rem] ${hasBreakGap(i) ? 'border-t-4 border-t-purple-500' : ''} ${i % 2 === 0 ? '' : 'bg-gray-100/50 dark:bg-gray-700/30'}">${time}</div>`).join('')}
+                        </div>
+                        <div class="flex-1 flex flex-col relative ${isHoliday ? 'bg-red-100 dark:bg-red-900/30' : ''}">
+                            ${slots.map((time, i) => `<div class="flex-1 border-b dark:border-gray-700 border-dashed min-h-[1.5rem] ${hasBreakGap(i) ? 'border-t-4 border-t-purple-500' : ''} ${!isHoliday ? (i % 2 === 0 ? '' : 'bg-gray-50/80 dark:bg-gray-700/30') : ''} ${!isHoliday ? 'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer' : ''}" ${!isHoliday ? `onclick="handleSlotClick(event, '${dateStr}', '${time}')"` : ''}></div>`).join('')}
+                            ${generateEventsHTML(dayEvents)}
+                        </div>
+                    </div>
+                </div>`;
+            container.innerHTML = html;
+        }
+
+        function renderWeekView(container) {
+            const showWknd = settings.showWeekends !== false;
+            const startOfWeek = new Date(currentDate);
+            const day = startOfWeek.getDay();
+            
+            let diffToStart = 0;
+            let daysToShow = 7;
+            if (!showWknd) {
+                // Empezar en martes (2), mostrar 5 días (hasta el sábado)
+                diffToStart = (day === 0) ? -5 : (day === 1 ? 1 : -(day - 2));
+                daysToShow = 5;
+            } else {
+                // Empezar en lunes (1), mostrar 7 días (toda la semana)
+                diffToStart = (day === 0) ? -6 : -(day - 1);
+                daysToShow = 7;
+            }
+            startOfWeek.setDate(startOfWeek.getDate() + diffToStart);
+
+            const wNum = getWeekNumber(startOfWeek);
+
+            let html = `<div class="flex flex-col h-full bg-white dark:bg-gray-800 rounded-lg shadow border dark:border-gray-700">
+                <div class="flex border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                    <div class="w-10 md:w-12 border-r border-indigo-700 dark:border-indigo-500 bg-indigo-600 text-white flex flex-col items-center justify-center shadow-inner">
+                        <span class="text-[8px] uppercase tracking-wider opacity-80">Semana</span>
+                        <span class="text-sm font-bold">${wNum}</span>
+                    </div>`;
+
+            const weekDates = [];
+            for (let i = 0; i < daysToShow; i++) {
+                const d = new Date(startOfWeek);
+                d.setDate(d.getDate() + i);
+                weekDates.push(d);
+                const dStr = getLocalISODate(d);
+                const isToday = dStr === getLocalISODate(new Date());
+                const isHoliday = holidays.includes(dStr);
+                html += `
+                    <div class="flex-1 p-2 text-center border-r dark:border-gray-700 last:border-0 cursor-pointer transition-all ${isToday && !isHoliday ? 'bg-indigo-600 text-white shadow-md transform scale-[1.02] z-10 border-b-4 border-indigo-800' : 'hover:bg-gray-100 dark:hover:bg-gray-700'} ${isHoliday ? 'bg-red-500 text-white dark:bg-red-700' : ''}" onclick="openDayActionModal('${dStr}')">
+                        <span class="block text-sm font-bold uppercase ${isToday && !isHoliday ? 'text-indigo-100' : 'opacity-80'}">${d.toLocaleDateString('es-ES', { weekday: 'short' })}</span>
+                        <span class="text-base font-extrabold ${isToday && !isHoliday ? 'text-white text-lg' : ''}">${d.getDate()}</span>
+                    </div>`;
+            }
+            html += `</div><div class="flex-1 flex overflow-hidden">
+                <div class="w-10 md:w-12 border-r dark:border-gray-700 flex flex-col">`;
+            slots.forEach((time, i) => {
+                html += `<div class="flex-1 border-b dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center justify-center min-h-[1.5rem] py-0 ${hasBreakGap(i) ? 'border-t-4 border-t-purple-500' : ''} ${i % 2 === 0 ? '' : 'bg-gray-100/50 dark:bg-gray-700/30'}">${time}</div>`;
+            });
+            html += `</div>`;
+
+            weekDates.forEach(d => {
+                const dStr = getLocalISODate(d);
+                const isHoliday = holidays.includes(dStr);
+                const dayEvents = events.filter(e => e.dateStr === dStr);
+
+                html += `<div class="flex-1 flex flex-col border-r dark:border-gray-700 last:border-0 relative ${isHoliday ? 'bg-red-100 dark:bg-red-900/30' : ''}">`;
+                slots.forEach((time, i) => {
+                    html += `<div class="flex-1 border-b dark:border-gray-700 border-dashed min-h-[1.5rem] ${hasBreakGap(i) ? 'border-t-4 border-t-purple-500' : ''} ${!isHoliday ? (i % 2 === 0 ? '' : 'bg-gray-50/80 dark:bg-gray-700/30') : ''} ${!isHoliday ? 'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer' : ''}" ${!isHoliday ? `onclick="handleSlotClick(event, '${dStr}', '${time}')"` : ''}></div>`;
+                });
+                html += generateEventsHTML(dayEvents);
+                html += `</div>`;
+            });
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
+
+        // --- STREAMING_CHUNK:Events Render Engine ---
+        function generateEventsHTML(dayEvents) {
+            if (!dayEvents || dayEvents.length === 0) return '';
+            const totalSlots = slots.length;
+            if (totalSlots === 0) return '';
+
+            let html = '';
+            dayEvents.forEach(ev => {
+                const sIdx = getSlotFraction(ev.timeStr);
+
+                let span = 1;
+                if (ev.endTimeStr) {
+                    const eIdx = getSlotFraction(ev.endTimeStr);
+                    if (eIdx > sIdx) span = eIdx - sIdx;
+                }
+
+                const topPercent = (sIdx / totalSlots) * 100;
+                const heightPercent = (span / totalSlots) * 100;
+
+                const past = isPastEvent(ev.dateStr, ev.timeStr);
+                const customBg = ev.color ? `background-color: ${ev.color}; ${past ? 'opacity: 0.85;' : ''}` : '';
+                const fallbackBg = past ? 'bg-orange-500 hover:bg-orange-600' : 'bg-primary hover:bg-primaryHover';
+                const bgClass = ev.color ? '' : fallbackBg;
+                
+                let typeName = '';
+                if (ev.color) {
+                    const lc = legendColors.find(l => l.color === ev.color);
+                    if (lc && lc.name.toLowerCase() !== 'personalizado') typeName = ` (${lc.name})`;
+                }
+
+                html += `
+                    <div class="absolute inset-x-[1px] rounded px-1 shadow-sm transition-colors cursor-pointer event-card ${bgClass} flex flex-col justify-center overflow-hidden" 
+                         style="top: calc(${topPercent}% + 1px); height: calc(${heightPercent}% - 2px); z-index: 10; ${customBg}; color: white; text-shadow: 0px 1px 4px rgba(0,0,0,0.9);" 
+                         onclick="openEventCard(event, '${ev.id}')">
+                        <span class="font-extrabold text-[10px] md:text-[11px] leading-tight truncate block text-center tracking-wide">${ev.obs && ev.obs.trim() !== '' ? '<span class="inline-flex items-center justify-center w-3.5 h-3.5 mr-0.5 bg-yellow-400 text-yellow-900 rounded-full text-[10px] font-black border border-yellow-500 align-text-bottom shadow-sm" style="text-shadow: none;">!</span>' : ''}${ev.name}${typeName}</span>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        // --- STREAMING_CHUNK:Additional Views & Modals ---
+        function renderMonthView(container) {
+            const showWknd = settings.showWeekends !== false;
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            let startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+
+            let iterDate = new Date(firstDay);
+            iterDate.setDate(iterDate.getDate() - startDay);
+
+            let html = `
+                <div class="flex-1 flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow border dark:border-gray-700">
+                    <div class="grid ${showWknd ? 'grid-cols-7' : 'grid-cols-5'} border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-center text-xs font-bold py-2 text-gray-500">
+                        ${showWknd ? '<div>Lun</div>' : ''}<div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>${showWknd ? '<div>Dom</div>' : ''}
+                    </div>
+                    <div class="flex-1 grid ${showWknd ? 'grid-cols-7' : 'grid-cols-5'} grid-rows-6">
+            `;
+
+            for (let i = 0; i < 42; i++) {
+                if (!showWknd && (iterDate.getDay() === 0 || iterDate.getDay() === 1)) {
+                    iterDate.setDate(iterDate.getDate() + 1);
+                    continue;
+                }
+                const isCurrentMonth = iterDate.getMonth() === month;
+                const dStr = getLocalISODate(iterDate);
+                const dayEvs = events.filter(e => e.dateStr === dStr);
+                const isHoliday = holidays.includes(dStr);
+
+                let classes = "border-r border-b dark:border-gray-700 p-1 flex flex-col hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer overflow-hidden transition-colors relative ";
+                if (!isCurrentMonth) classes += "bg-gray-50/50 dark:bg-gray-800/50 text-gray-400 ";
+                if (isHoliday) classes += "bg-red-50 dark:bg-red-900/20 ";
+
+                html += `<div class="${classes}" onclick="handleMonthDayClick('${dStr}')">
+                    <span class="text-xs font-medium ${isCurrentMonth ? '' : 'opacity-50'} ${iterDate.toDateString() === new Date().toDateString() ? 'bg-primary text-white w-5 h-5 flex items-center justify-center rounded-full' : ''}">${iterDate.getDate()}</span>
+                    <div class="flex-1 mt-1 flex flex-col gap-0.5 overflow-hidden">
+                `;
+
+                dayEvs.slice(0, 3).forEach(ev => {
+                    const past = isPastEvent(ev.dateStr, ev.timeStr);
+                    const customBg = ev.color ? `background-color: ${ev.color}; ${past ? 'opacity: 0.85;' : ''}` : '';
+                    const fallbackBg = past ? 'bg-orange-500' : 'bg-primary';
+                    const bgClass = ev.color ? '' : fallbackBg;
+                    
+                    let typeName = '';
+                    if (ev.color) {
+                        const lc = legendColors.find(l => l.color === ev.color);
+                        if (lc && lc.name.toLowerCase() !== 'personalizado') typeName = ` (${lc.name})`;
+                    }
+                    html += `<div class="${bgClass} text-[10px] font-extrabold rounded px-1 truncate text-center tracking-wide" style="${customBg}; color: white; text-shadow: 0px 1px 4px rgba(0,0,0,0.9);">${ev.timeStr} ${ev.obs && ev.obs.trim() !== '' ? '<span class="inline-flex items-center justify-center w-3 h-3 mr-0.5 bg-yellow-400 text-yellow-900 rounded-full text-[8px] font-black border border-yellow-500 align-text-bottom" style="text-shadow: none;">!</span>' : ''}${ev.name}${typeName}</div>`;
+                });
+                if (dayEvs.length > 3) html += `<div class="text-gray-500 text-[9px] font-bold">+${dayEvs.length - 3}</div>`;
+                html += `</div></div>`;
+                iterDate.setDate(iterDate.getDate() + 1);
+            }
+            html += `</div></div></div>`;
+            container.innerHTML = html;
+        }
+
+        function renderMiniCalendar() {
+            const showWknd = settings.showWeekends !== false;
+            const container = document.getElementById('mini-calendar-grid');
+            const display = document.getElementById('mini-month-display');
+            const header = document.getElementById('mini-calendar-header');
+            if (!container) return;
+
+            if (header) {
+                if (showWknd) {
+                    header.className = "grid grid-cols-7 gap-1 text-[9px] text-center font-bold text-gray-400 mb-1";
+                    header.innerHTML = '<div>L</div><div>M</div><div>X</div><div>J</div><div>V</div><div>S</div><div>D</div>';
+                    container.className = "grid grid-cols-7 gap-1 flex-1 content-start";
+                } else {
+                    header.className = "grid grid-cols-5 gap-1 text-[9px] text-center font-bold text-gray-400 mb-1";
+                    header.innerHTML = '<div>M</div><div>X</div><div>J</div><div>V</div><div>S</div>';
+                    container.className = "grid grid-cols-5 gap-1 flex-1 content-start";
+                }
+            }
+
+            const formatter = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' });
+            display.innerText = formatter.format(miniCalendarDate);
+
+            const year = miniCalendarDate.getFullYear();
+            const month = miniCalendarDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            let startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+
+            let iterDate = new Date(firstDay);
+            iterDate.setDate(iterDate.getDate() - startDay);
+
+            let html = '';
+            for (let i = 0; i < 42; i++) {
+                if (!showWknd && (iterDate.getDay() === 0 || iterDate.getDay() === 1)) {
+                    iterDate.setDate(iterDate.getDate() + 1);
+                    continue;
+                }
+                const isCurrentMonth = iterDate.getMonth() === month;
+                const isToday = iterDate.toDateString() === new Date().toDateString();
+                const isSelected = iterDate.toDateString() === currentDate.toDateString();
+
+                let classes = "text-center py-1 text-[10px] rounded cursor-pointer transition-colors ";
+                if (!isCurrentMonth) classes += "text-gray-300 dark:text-gray-600 ";
+                else if (isSelected) classes += "bg-primary text-white font-bold ";
+                else if (isToday) classes += "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 font-bold ";
+                else classes += "hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-300 ";
+
+                html += `<div class="${classes}" onclick="goToWeekFromMini(${iterDate.getFullYear()}, ${iterDate.getMonth()}, ${iterDate.getDate()})">${iterDate.getDate()}</div>`;
+                iterDate.setDate(iterDate.getDate() + 1);
+            }
+            container.innerHTML = html;
+        }
+
+        function changeMiniMonth(dir) {
+            miniCalendarDate.setMonth(miniCalendarDate.getMonth() + dir);
+            renderMiniCalendar();
+        }
+
+        function goToWeekFromMini(y, m, d) {
+            currentDate = new Date(y, m, d);
+            currentViewIndex = 1; // Semana
+            document.getElementById('view-toggle-btn').innerText = `Vista: Semana`;
+            renderCalendar();
+            miniCalendarDate = new Date(currentDate);
+            renderMiniCalendar();
+        }
+
+        // --- STREAMING_CHUNK:CRUD Actions Logic ---
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        function addMinutesToTime(timeStr, mins) {
+            let [h, m] = timeStr.split(':').map(Number);
+            m += mins;
+            h += Math.floor(m / 60);
+            m = m % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function getSlotFraction(timeStr) {
+            const idx = slots.indexOf(timeStr);
+            if (idx !== -1) return idx;
+            
+            const [h, m] = timeStr.split(':').map(Number);
+            const evMins = h * 60 + m;
+            
+            for (let i = 0; i < slots.length; i++) {
+                const [sh, sm] = slots[i].split(':').map(Number);
+                const slotMins = sh * 60 + sm;
+                
+                if (evMins < slotMins) {
+                    if (i === 0) return 0;
+                    const [psh, psm] = slots[i-1].split(':').map(Number);
+                    const prevMins = psh * 60 + psm;
+                    const step = parseInt(settings.interval);
+                    const fraction = (evMins - prevMins) / step;
+                    return (i - 1) + Math.min(fraction, 1);
+                }
+            }
+            if (slots.length === 0) return 0;
+            const [lsh, lsm] = slots[slots.length - 1].split(':').map(Number);
+            const lastMins = lsh * 60 + lsm;
+            const step = parseInt(settings.interval);
+            return (slots.length - 1) + ((evMins - lastMins) / step);
+        }
+
+        function isSlotOccupied(dateStr, timeStr) {
+            const interval = parseInt(settings.interval);
+            const newStart = timeToMinutes(timeStr);
+            return events.some(e => {
+                if (e.dateStr !== dateStr || e.id === editingEventId) return false;
+                let existingStart = timeToMinutes(e.timeStr);
+                let existingEnd = e.endTimeStr ? timeToMinutes(e.endTimeStr) : existingStart + interval;
+                return (newStart >= existingStart) && (newStart < existingEnd);
+            });
+        }
+
+        function handleSlotClick(e, dateStr, timeStr) {
+            e.stopPropagation();
+            if (isSlotOccupied(dateStr, timeStr)) {
+                return showToast('Esta franja horaria ya está ocupada', 'error');
+            }
+            editingEventId = null;
+            document.getElementById('event-modal-title').innerText = 'Nuevo Evento';
+
+            const nameEl = document.getElementById('ev-name');
+            const phoneEl = document.getElementById('ev-phone');
+            nameEl.value = '';
+            nameEl.disabled = false;
+            nameEl.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-gray-200', 'dark:bg-gray-600');
+
+            phoneEl.value = '';
+            phoneEl.disabled = false;
+            phoneEl.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-gray-200', 'dark:bg-gray-600');
+
+            document.getElementById('ev-obs').value = '';
+            document.getElementById('ev-date').value = dateStr;
+            document.getElementById('ev-time').value = timeStr;
+            document.getElementById('ev-endtime').value = '';
+
+            document.getElementById('autocomplete-list').classList.add('hidden');
+            renderEventTypeSelector();
+            openModal('event-modal');
+        }
+
+
+        function handleMonthDayClick(dateStr) {
+            if (holidays.includes(dateStr)) return showToast('Este día es festivo', 'error');
+            handleSlotClick(new Event('click'), dateStr, slots[0] || '09:00');
+        }
+
+        function saveEvent() {
+            const name = document.getElementById('ev-name').value.trim();
+            const dateStr = document.getElementById('ev-date').value;
+            let timeStr = document.getElementById('ev-time').value;
+            const phone = document.getElementById('ev-phone').value.trim();
+            const obs = document.getElementById('ev-obs').value.trim();
+            let endTimeStr = document.getElementById('ev-endtime').value;
+            const color = document.getElementById('ev-color').value;
+
+            const lcEvent = legendColors.find(l => l.color === color);
+
+            if (!name) return showToast('El nombre o evento es obligatorio', 'error');
+            if (!phone) return showToast('El número de teléfono es obligatorio', 'error');
+            
+            if (phone) {
+                const phoneRegex = /^[0-9]{9}$/;
+                if (!phoneRegex.test(phone)) {
+                    return showToast('Solo puedes introducir un número de teléfono de 9 cifras', 'error');
+                }
+            }
+
+            const interval = parseInt(settings.interval);
+            
+            if (!endTimeStr) {
+                endTimeStr = addMinutesToTime(timeStr, interval);
+            }
+
+            // Nueva lógica de colisiones: comprobar rangos de tiempo [timeStr, endTimeStr)
+            const newStart = timeToMinutes(timeStr);
+            const newEnd = timeToMinutes(endTimeStr);
+            
+            const collision = events.some(e => {
+                if (e.dateStr !== dateStr || e.id === editingEventId) return false;
+                
+                let existingStart = timeToMinutes(e.timeStr);
+                let existingEnd;
+                
+                if (e.endTimeStr) {
+                    existingEnd = timeToMinutes(e.endTimeStr);
+                } else {
+                    // Fallback para eventos antiguos sin endTimeStr
+                    existingEnd = existingStart + interval;
+                }
+                
+                // Comprobación de solapamiento: (StartA < EndB) y (EndA > StartB)
+                return (newStart < existingEnd) && (newEnd > existingStart);
+            });
+            
+            if (collision) return showToast('Esta fracción horaria ya está ocupada.', 'error');
+
+            if (phone) {
+                const exist = contacts.find(c => c.name.toLowerCase() === name.toLowerCase());
+                if (!exist) contacts.push({ name, phone });
+                else exist.phone = phone;
+            }
+
+            if (editingEventId) {
+                const idx = events.findIndex(e => e.id === editingEventId);
+                if (idx > -1) events[idx] = { id: editingEventId, name, phone, obs, dateStr, timeStr, endTimeStr, color };
+            } else {
+                events.push({ id: Date.now().toString(), name, phone, obs, dateStr, timeStr, endTimeStr, color });
+            }
+            saveState();
+            closeModal('event-modal');
+            renderCalendar();
+            updateContactsList();
+            showToast('Evento guardado');
+        }
+
+        function openEventCard(e, id) {
+            e.stopPropagation();
+            const ev = events.find(ex => ex.id === id);
+            if (!ev) return;
+            actionEventId = id;
+            document.getElementById('action-ev-name').innerText = ev.name;
+            document.getElementById('action-ev-time').innerText = `${ev.timeStr} ${ev.endTimeStr ? '- ' + ev.endTimeStr : ''}`;
+
+            const editBtn = document.getElementById('action-btn-edit');
+            const obsContainer = document.getElementById('action-ev-obs-container');
+            const obsText = document.getElementById('action-ev-obs');
+            const waBtn = document.getElementById('action-btn-wa');
+            
+            if (!ev.phone) {
+                if (waBtn) waBtn.classList.add('hidden');
+            } else {
+                if (waBtn) waBtn.classList.remove('hidden');
+            }
+
+            if (ev.obs && ev.obs.trim() !== '') {
+                obsText.innerText = ev.obs;
+                obsContainer.classList.remove('hidden');
+                editBtn.classList.remove('hidden');
+            } else {
+                obsText.innerText = '';
+                obsContainer.classList.add('hidden');
+                editBtn.classList.add('hidden');
+            }
+
+            openModal('event-action-modal');
+        }
+
+        function editEventFromAction() {
+            closeModal('event-action-modal');
+            const ev = events.find(e => e.id === actionEventId);
+            if (!ev) return;
+            editingEventId = ev.id;
+            document.getElementById('event-modal-title').innerText = 'Editar Evento';
+
+            const nameEl = document.getElementById('ev-name');
+            const phoneEl = document.getElementById('ev-phone');
+
+            nameEl.value = ev.name;
+            nameEl.disabled = true;
+            nameEl.classList.add('opacity-60', 'cursor-not-allowed', 'bg-gray-200', 'dark:bg-gray-600');
+
+            phoneEl.value = ev.phone || '';
+            phoneEl.disabled = true;
+            phoneEl.classList.add('opacity-60', 'cursor-not-allowed', 'bg-gray-200', 'dark:bg-gray-600');
+
+            document.getElementById('ev-obs').value = ev.obs || '';
+            document.getElementById('ev-date').value = ev.dateStr;
+
+            document.getElementById('ev-time').value = ev.timeStr;
+            document.getElementById('ev-endtime').value = ev.endTimeStr || '';
+
+            renderEventTypeSelector(ev.color || '');
+            openModal('event-modal');
+        }
+
+        function deleteEventFromAction() {
+            if (!confirm('¿Eliminar evento?')) return;
+            events = events.filter(e => e.id !== actionEventId);
+            saveState();
+            closeModal('event-action-modal');
+            renderCalendar();
+            showToast('Evento eliminado');
+        }
+
+        // --- STREAMING_CHUNK:Day Action Features ---
+        function formatWADate(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            const date = new Date(y, m - 1, d);
+            const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const dayName = days[date.getDay()];
+            const shortYear = y.substring(2);
+            return `${dayName} ${parseInt(d)}/${parseInt(m)}/${shortYear}`;
+        }
+
+        function sendWAFromAction() {
+            const ev = events.find(e => e.id === actionEventId);
+            if (!ev || !ev.phone) return showToast('No hay teléfono registrado', 'error');
+            let text = settings.waMessage.replace('{fecha}', formatWADate(ev.dateStr)).replace('{hora}', ev.timeStr);
+            window.open(`https://wa.me/${ev.phone.replace(/\+/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function openDayActionModal(dateStr) {
+            selectedDateForAction = dateStr;
+            const [y, m, d] = dateStr.split('-');
+            const formatDate = new Date(y, m - 1, d).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+            document.getElementById('day-action-title').innerText = `Opciones: ${formatDate}`;
+            openModal('day-action-modal');
+        }
+
+        function toggleHoliday() {
+            const hasEvents = events.some(e => e.dateStr === selectedDateForAction);
+            if (hasEvents) return showToast('❌ Hay eventos este día, bórralos primero.', 'error');
+
+            const idx = holidays.indexOf(selectedDateForAction);
+            if (idx > -1) holidays.splice(idx, 1);
+            else holidays.push(selectedDateForAction);
+
+            saveState();
+            closeModal('day-action-modal');
+            renderCalendar();
+            showToast(idx > -1 ? 'Día normal restaurado' : 'Día marcado como festivo');
+        }
+
+        function sendBulkWA() {
+            const dayEvents = events.filter(e => e.dateStr === selectedDateForAction && e.phone);
+            if (dayEvents.length === 0) return showToast('No hay eventos con teléfono para hoy.', 'error');
+
+            dayEvents.forEach(ev => {
+                let text = settings.waMessage.replace('{fecha}', formatWADate(ev.dateStr)).replace('{hora}', ev.timeStr);
+                window.open(`https://wa.me/${ev.phone.replace(/\+/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
+            });
+            closeModal('day-action-modal');
+            showToast(`Abriendo ${dayEvents.length} chats... (Permite popups)`);
+        }
+
+        function openCustomRangeModal() {
+            closeModal('day-action-modal');
+            const selectStart = document.getElementById('cr-start');
+            const selectEnd = document.getElementById('cr-end');
+            selectStart.innerHTML = ''; selectEnd.innerHTML = '';
+
+            slots.forEach(time => {
+                selectStart.innerHTML += `<option value="${time}">${time}</option>`;
+                selectEnd.innerHTML += `<option value="${time}">${time}</option>`;
+            });
+
+            document.getElementById('cr-name').value = 'Bloqueado';
+            openModal('custom-range-modal');
+        }
+
+        function saveCustomRange() {
+            const name = document.getElementById('cr-name').value.trim() || 'Bloqueado';
+            const start = document.getElementById('cr-start').value;
+            const end = document.getElementById('cr-end').value;
+
+            const sIdx = slots.indexOf(start);
+            const eIdx = slots.indexOf(end);
+
+            if (sIdx >= eIdx) return showToast('La hora de inicio debe ser antes.', 'error');
+            for (let i = sIdx; i < eIdx; i++) {
+                if (isSlotOccupied(selectedDateForAction, slots[i])) {
+                    return showToast(`Choque de horarios a las ${slots[i]}.`, 'error');
+                }
+            }
+
+            events.push({
+                id: Date.now().toString(), name, phone: '', obs: 'Bloqueo',
+                dateStr: selectedDateForAction, timeStr: start, endTimeStr: end
+            });
+
+            saveState();
+            closeModal('custom-range-modal');
+            renderCalendar();
+            showToast('Franjas bloqueadas correctamente');
+        }
+
+        // --- STREAMING_CHUNK:Contacts AutoComplete ---
+        function filterContacts(val) {
+            const list = document.getElementById('autocomplete-list');
+            list.innerHTML = '';
+            
+            const selectedColor = document.getElementById('ev-color').value;
+            const lcEvent = legendColors.find(l => l.color === selectedColor);
+            const isPersonalizado = lcEvent && lcEvent.name.toLowerCase() === 'personalizado';
+
+            if (isPersonalizado || !val) { list.classList.add('hidden'); return; }
+
+            const matches = contacts.filter(c => c.name.toLowerCase().includes(val.toLowerCase()));
+            if (matches.length === 0) { list.classList.add('hidden'); return; }
+
+            matches.forEach(c => {
+                const div = document.createElement('div');
+                div.className = "px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer flex justify-between";
+                div.innerHTML = `<span>${c.name}</span><span class="text-xs text-gray-500">${c.phone}</span>`;
+                div.onclick = () => {
+                    document.getElementById('ev-name').value = c.name;
+                    document.getElementById('ev-phone').value = c.phone;
+                    list.classList.add('hidden');
+                };
+                list.appendChild(div);
+            });
+            list.classList.remove('hidden');
+        }
+
+        function updateContactsList() {
+            const list = document.getElementById('contacts-list');
+            const searchInput = document.getElementById('contact-search-input');
+            const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+            let filteredContacts = contacts;
+            if (searchTerm) {
+                filteredContacts = contacts.filter(c => c.name.toLowerCase().includes(searchTerm) || c.phone.includes(searchTerm));
+            }
+
+            if (filteredContacts.length === 0) {
+                list.innerHTML = '<p class="text-sm text-gray-500 text-center mt-10">No hay contactos guardados.</p>';
+                return;
+            }
+            list.innerHTML = filteredContacts.map((c) => {
+                const index = contacts.indexOf(c);
+                return `
+                <div class="flex justify-between items-center py-2 border-b dark:border-gray-700">
+                    <div>
+                        <div class="font-medium text-sm">${c.name}</div>
+                        <div class="text-xs text-gray-500">${c.phone}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="editContact(${index})" class="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:hover:bg-blue-800 rounded-full shadow-sm transition-colors" title="Editar">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                        </button>
+                        <button onclick="deleteContact(${index})" class="flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/50 dark:text-red-400 dark:hover:bg-red-800 rounded-full shadow-sm transition-colors" title="Eliminar">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function deleteContact(index) {
+            if (!confirm('¿Estás seguro de que quieres eliminar este contacto?')) return;
+            if (!confirm('Esta acción no se puede deshacer. ¿Confirmar eliminación definitiva?')) return;
+            contacts.splice(index, 1);
+            saveState();
+            updateContactsList();
+        }
+
+        function editContact(index) {
+            const current = contacts[index];
+            document.getElementById('edit-contact-index').value = index;
+            document.getElementById('edit-contact-name').value = current.name;
+            document.getElementById('edit-contact-phone').value = current.phone;
+            openModal('edit-contact-modal');
+        }
+
+        function saveEditContact() {
+            const index = document.getElementById('edit-contact-index').value;
+            const newName = document.getElementById('edit-contact-name').value;
+            const newPhone = document.getElementById('edit-contact-phone').value;
+
+            if (newName.trim() !== '' && newPhone.trim() !== '') {
+                contacts[index].name = newName.trim();
+                contacts[index].phone = newPhone.trim();
+                saveState();
+                updateContactsList();
+                closeModal('edit-contact-modal');
+                showToast('Contacto actualizado correctamente');
+            } else {
+                showToast('Datos inválidos. Completa todos los campos.', 'error');
+            }
+        }
+
+        function addNewContact() {
+            const name = document.getElementById('new-contact-name').value.trim();
+            const phone = document.getElementById('new-contact-phone').value.trim();
+
+            if (name !== '' && phone !== '') {
+                const exist = contacts.find(c => c.name.toLowerCase() === name.toLowerCase());
+                if (exist) {
+                    showToast('Ya existe un contacto con este nombre', 'error');
+                } else {
+                    contacts.push({ name, phone });
+                    document.getElementById('new-contact-name').value = '';
+                    document.getElementById('new-contact-phone').value = '';
+                    saveState();
+                    updateContactsList();
+                    closeModal('add-contact-modal');
+                    showToast('Contacto añadido correctamente');
+                }
+            } else {
+                showToast('Debes introducir nombre y teléfono', 'error');
+            }
+        }
+
+        // --- STREAMING_CHUNK:Settings & Background Image ---
+        function applySettings() {
+            if (settings.darkMode) document.documentElement.classList.add('dark');
+            else document.documentElement.classList.remove('dark');
+
+            const bgLayer = document.getElementById('bg-layer');
+            const app = document.getElementById('app-container');
+
+            bgLayer.classList.add('hidden');
+            
+            if (settings.bgColor) {
+                app.style.backgroundColor = settings.bgColor;
+                const picker = document.getElementById('bg-color-picker');
+                if(picker) picker.value = settings.bgColor;
+            } else {
+                app.style.backgroundColor = '';
+                const picker = document.getElementById('bg-color-picker');
+                if(picker) picker.value = '#ffffff';
+            }
+
+            document.getElementById('dark-mode-toggle').checked = settings.darkMode;
+            if (document.getElementById('show-weekends-toggle')) {
+                document.getElementById('show-weekends-toggle').checked = settings.showWeekends !== false;
+            }
+
+            // Set Select values safely
+            const setSelectVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+            setSelectVal('time-start', settings.start);
+            setSelectVal('time-end', settings.end);
+            setSelectVal('break-start', settings.breakStart);
+            setSelectVal('break-end', settings.breakEnd);
+            setSelectVal('time-interval', settings.interval);
+
+            document.getElementById('wa-message').value = settings.waMessage || 'Hola, te recuerdo tu cita el día {fecha} a las {hora}.';
+        }
+
+        function updateBgColor() {
+            const picker = document.getElementById('bg-color-picker');
+            if(picker) {
+                settings.bgColor = picker.value;
+                applySettings();
+            }
+        }
+
+        function clearBgColor() {
+            settings.bgColor = '';
+            applySettings();
+            showToast('Color de fondo eliminado');
+        }
+
+        function toggleDarkMode() {
+            settings.darkMode = document.getElementById('dark-mode-toggle').checked;
+            applySettings();
+        }
+
+        function toggleWeekends() {
+            settings.showWeekends = document.getElementById('show-weekends-toggle').checked;
+            applySettings();
+            renderCalendar();
+            renderMiniCalendar();
+        }
+
+        function saveSettings() {
+            if (document.getElementById('show-weekends-toggle')) {
+                settings.showWeekends = document.getElementById('show-weekends-toggle').checked;
+            }
+            settings.start = document.getElementById('time-start').value;
+            settings.end = document.getElementById('time-end').value;
+            settings.breakStart = document.getElementById('break-start').value;
+            settings.breakEnd = document.getElementById('break-end').value;
+            settings.interval = document.getElementById('time-interval').value;
+            settings.waMessage = document.getElementById('wa-message').value;
+
+            finalizeSave();
+        }
+
+        async function finalizeSave() {
+            try {
+                localStorage.setItem(`peluqueria_data_${currentCalendar}`, JSON.stringify({ events, contacts, holidays, settings, legendColors }));
+            } catch (e) { console.error("Error guardando settings", e); }
+
+            applySettings();
+            generateSlots();
+            renderCalendar();
+            closeModal('settings-modal');
+            showToast('Ajustes guardados en la nube.');
+        }
+
+
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        let currentZoom = 1;
+        function changeZoom(delta) {
+            currentZoom += delta;
+            if (currentZoom < 0.5) currentZoom = 0.5;
+            if (currentZoom > 2.0) currentZoom = 2.0;
+            document.getElementById('calendar-container').style.zoom = currentZoom;
+        }
+
+        document.addEventListener('click', (e) => {
+            if (e.target.id !== 'ev-name') {
+                document.getElementById('autocomplete-list').classList.add('hidden');
+            }
+        });
+
+        const todayDateObj = new Date();
+        const todayStrLabel = todayDateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+        const btnGoToday = document.getElementById('btn-go-today');
+        if (btnGoToday) btnGoToday.innerText = `Hoy (${todayStrLabel})`;
+
+
+
+        // --- STREAMING_CHUNK:Legend Logic ---
+        function openLegendModal() {
+            renderLegendList();
+            openModal('legend-modal');
+        }
+
+        function renderLegendList() {
+            const list = document.getElementById('legend-list');
+            if (!list) return;
+            
+            if (legendColors.length === 0) {
+                list.innerHTML = '<p class="text-sm text-gray-500 text-center mt-4">No hay colores en la leyenda.</p>';
+                return;
+            }
+            
+            list.innerHTML = legendColors.map((item, index) => {
+                return `
+                <div class="flex items-center justify-between p-3 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                    <div class="flex items-center gap-3 flex-1">
+                        <input type="color" id="edit-color-${index}" value="${item.color}" onchange="updateLegendColor(${index})" class="w-8 h-8 p-0.5 border dark:border-gray-600 rounded cursor-pointer bg-transparent shrink-0">
+                        <input type="text" id="edit-name-${index}" value="${item.name}" onblur="updateLegendColor(${index})" class="flex-1 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary focus:outline-none text-sm font-medium text-gray-800 dark:text-gray-200">
+                        <input type="number" id="edit-duration-${index}" value="${item.duration || 30}" onblur="updateLegendColor(${index})" class="w-16 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary focus:outline-none text-sm font-medium text-gray-800 dark:text-gray-200" title="Minutos">
+                    </div>
+                    <button onclick="deleteLegendColor(${index})" class="ml-3 text-red-500 hover:text-red-700 p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Eliminar">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
+            `}).join('');
+        }
+
+        function addLegendColor() {
+            const nameEl = document.getElementById('new-legend-name');
+            const colorEl = document.getElementById('new-legend-color');
+            const durationEl = document.getElementById('new-legend-duration');
+            const name = nameEl.value.trim();
+            const color = colorEl.value;
+            const duration = parseInt(durationEl.value) || parseInt(settings.interval) || 30;
+            
+            if (!name) return showToast('Escribe un nombre para el tipo de cita', 'error');
+            
+            legendColors.push({ id: Date.now().toString(), name, color, duration });
+            saveState();
+            nameEl.value = '';
+            durationEl.value = '';
+            renderLegendList();
+            showToast('Tipo añadido a la leyenda');
+        }
+
+        function updateLegendColor(index) {
+            const name = document.getElementById(`edit-name-${index}`).value.trim();
+            const color = document.getElementById(`edit-color-${index}`).value;
+            const duration = parseInt(document.getElementById(`edit-duration-${index}`).value) || parseInt(settings.interval) || 30;
+            
+            if (!name) return;
+            
+            if (legendColors[index].name !== name || legendColors[index].color !== color || legendColors[index].duration !== duration) {
+                legendColors[index].name = name;
+                legendColors[index].color = color;
+                legendColors[index].duration = duration;
+                saveState();
+                renderCalendar();
+            }
+        }
+
+        function deleteLegendColor(index) {
+            if (!confirm('¿Eliminar este color de la leyenda?')) return;
+            legendColors.splice(index, 1);
+            saveState();
+            renderLegendList();
+        }
+
+        function renderEventTypeSelector(selectedColor = '') {
+            const container = document.getElementById('event-type-selector');
+            if (!container) return;
+            
+            if (legendColors.length === 0) {
+                container.innerHTML = '<span class="text-xs text-gray-500">No hay leyenda de colores.</span>';
+                document.getElementById('ev-color').value = '';
+                return;
+            }
+            
+            if (!selectedColor) selectedColor = legendColors[0].color;
+            document.getElementById('ev-color').value = selectedColor;
+            
+            const lc = legendColors.find(l => l.color === selectedColor);
+            const phoneContainer = document.getElementById('ev-phone-container');
+            const nameLabel = document.getElementById('ev-name-label');
+            if (phoneContainer && nameLabel) {
+                phoneContainer.style.display = 'block';
+                nameLabel.innerText = 'Nombre';
+            }
+            
+            container.innerHTML = legendColors.map(item => `
+                <button type="button" onclick="selectEventType('${item.color}')" class="px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-sm transition-transform active:scale-95 flex items-center gap-1 opacity-60 hover:opacity-100 ${selectedColor === item.color ? 'ring-2 ring-offset-2 ring-gray-400 opacity-100 scale-105 dark:ring-offset-gray-800' : ''}" style="background-color: ${item.color};">
+                    ${item.name}
+                </button>
+            `).join('');
+        }
+
+        function selectEventType(color) {
+            renderEventTypeSelector(color);
+            
+            const lc = legendColors.find(l => l.color === color);
+            const duration = lc && lc.duration ? lc.duration : parseInt(settings.interval);
+            
+            const timeStr = document.getElementById('ev-time').value;
+            if (timeStr) {
+                const endTimeStr = addMinutesToTime(timeStr, duration);
+                document.getElementById('ev-endtime').value = endTimeStr;
+            }
+        }
+
+        Object.assign(window, {
+            openLegendModal, addLegendColor, updateLegendColor, deleteLegendColor, selectEventType,
+            openModal, closeModal, toggleView, changeDate, goToday, changeMiniMonth, goToWeekFromMini,
+            handleSlotClick, handleMonthDayClick, saveEvent, openEventCard, editEventFromAction, deleteEventFromAction,
+            sendWAFromAction, openDayActionModal, toggleHoliday, sendBulkWA, openCustomRangeModal, saveCustomRange,
+            filterContacts, updateContactsList, deleteContact, editContact, saveEditContact, addNewContact, toggleDarkMode, toggleWeekends, saveSettings, updateBgColor, clearBgColor,
+            toggleSidebar, changeZoom, toggleCalendar
+        });
+    </script>
+</body>
+
+</html>
