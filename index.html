@@ -1052,7 +1052,7 @@ async function loadCalendarData() {
             const eventsNuri = events.filter(e => e.dateStr === dateStr && e.calendar === 'nuri');
 
             let html = `
-                <div class="flex flex-col h-full w-full bg-white dark:bg-gray-800 rounded-lg shadow border dark:border-gray-700 min-w-[350px]">
+                <div class="flex flex-col h-full w-full bg-white dark:bg-gray-800 rounded-lg shadow border dark:border-gray-700 min-w-0">
                     <div class="flex border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
                         <div class="w-12 border-r border-indigo-700 dark:border-indigo-500 bg-indigo-600 text-white flex flex-col items-center justify-center shadow-inner shrink-0">
                             <span class="text-[8px] uppercase tracking-wider opacity-80">Semana</span>
@@ -1067,8 +1067,8 @@ async function loadCalendarData() {
                         <!-- Nombres Vero / Nuri -->
                         <div class="flex border-b dark:border-gray-700 bg-gray-100 dark:bg-gray-800 sticky top-0 z-20 shadow-sm">
                             <div class="w-12 border-r dark:border-gray-700 shrink-0 bg-gray-50 dark:bg-gray-900/50"></div>
-                            <div class="flex-1 flex items-center justify-center text-center font-bold text-indigo-700 dark:text-indigo-300 border-r dark:border-gray-700 py-1.5 min-w-[150px] bg-indigo-50 dark:bg-indigo-900/20">VERO</div>
-                            <div class="flex-1 flex items-center justify-center text-center font-bold text-pink-700 dark:text-pink-300 py-1.5 min-w-[150px] bg-pink-50 dark:bg-pink-900/20">NURI</div>
+                            <div class="flex-1 flex items-center justify-center text-center font-bold text-indigo-700 dark:text-indigo-300 border-r dark:border-gray-700 py-1.5 min-w-0 bg-indigo-50 dark:bg-indigo-900/20">VERO</div>
+                            <div class="flex-1 flex items-center justify-center text-center font-bold text-pink-700 dark:text-pink-300 py-1.5 min-w-0 bg-pink-50 dark:bg-pink-900/20">NURI</div>
                         </div>
                         <div class="flex-1 flex relative">
                             <div class="w-12 border-r dark:border-gray-700 flex flex-col shrink-0">
@@ -1076,12 +1076,12 @@ async function loadCalendarData() {
                             </div>
                             <div class="flex-1 flex relative">
                                 <!-- Columna Vero -->
-                                <div class="flex-1 flex flex-col relative border-r dark:border-gray-700 min-w-[150px] ${isHoliday ? 'bg-red-100 dark:bg-red-900/30' : ''}">
+                                <div class="flex-1 flex flex-col relative border-r dark:border-gray-700 min-w-0 ${isHoliday ? 'bg-red-100 dark:bg-red-900/30' : ''}">
                                     ${slots.map((time, i) => `<div class="flex-1 border-b dark:border-gray-700 border-dashed min-h-[1.5rem] ${hasBreakGap(i) ? 'border-t-4 border-t-purple-500' : ''} ${!isHoliday ? (i % 2 === 0 ? '' : 'bg-gray-50/80 dark:bg-gray-700/30') : ''} ${!isHoliday ? 'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer' : ''}" style="min-height: 2.5rem;" ${!isHoliday ? `onclick="handleSlotClick(event, '${dateStr}', '${time}', 'vero')"` : ''}></div>`).join('')}
                                     ${generateEventsHTML(eventsVero)}
                                 </div>
                                 <!-- Columna Nuri -->
-                                <div class="flex-1 flex flex-col relative min-w-[150px] ${isHoliday ? 'bg-red-100 dark:bg-red-900/30' : ''}">
+                                <div class="flex-1 flex flex-col relative min-w-0 ${isHoliday ? 'bg-red-100 dark:bg-red-900/30' : ''}">
                                     ${slots.map((time, i) => `<div class="flex-1 border-b dark:border-gray-700 border-dashed min-h-[1.5rem] ${hasBreakGap(i) ? 'border-t-4 border-t-purple-500' : ''} ${!isHoliday ? (i % 2 === 0 ? '' : 'bg-gray-50/80 dark:bg-gray-700/30') : ''} ${!isHoliday ? 'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer' : ''}" style="min-height: 2.5rem;" ${!isHoliday ? `onclick="handleSlotClick(event, '${dateStr}', '${time}', 'nuri')"` : ''}></div>`).join('')}
                                     ${generateEventsHTML(eventsNuri)}
                                 </div>
