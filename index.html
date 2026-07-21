@@ -305,8 +305,10 @@
                     <ul class="list-disc pl-5 space-y-1">
                         <li><strong>Sincronización Automática:</strong> El calendario se refresca solo cada 30 segundos. Si agendas algo desde el móvil, aparecerá mágicamente en el PC sin que toques nada.</li>
                         <li><strong>Contactos:</strong> Puedes buscar, añadir, editar o eliminar clientes desde el menú de la izquierda.</li>
+                        <li><strong>Sábado Intensivo:</strong> Activa en Ajustes un horario exclusivo para los sábados (08:30 a 15:00) que se adaptará de forma inteligente sin afectar el resto de la semana.</li>
+                        <li><strong>Seguridad:</strong> App protegida por contraseña (modificable en Ajustes). Tu navegador la recordará para que no tengas que introducirla cada vez que entres.</li>
                         <li><strong>Leyenda de Colores:</strong> Puedes gestionar distintos tipos de citas, asignándoles colores para diferenciarlas a simple vista.</li>
-                        <li><strong>Ajustes ⚙️:</strong> Modifica el aspecto visual (Modo Oscuro, fondo), el horario laboral (Hora Inicio/Fin, Descansos) y la plantilla para el Mensaje de WhatsApp.</li>
+                        <li><strong>Ajustes ⚙️:</strong> Modifica el aspecto visual (Modo Oscuro, fondo), el horario laboral y la plantilla para el Mensaje de WhatsApp.</li>
                     </ul>
                 </div>
             </div>
@@ -353,6 +355,16 @@
                             <label class="font-medium text-sm">Mostrar Domingo y Lunes</label>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="show-weekends-toggle" onchange="toggleWeekends()" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="font-medium text-sm">Sábado Intensivo</label>
+                                <p class="text-[10px] text-gray-500">Horario 08:30 - 15:00 sin pausa.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="saturday-intensive-toggle" onchange="toggleSaturdayIntensive()" class="sr-only peer">
                                 <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                             </label>
                         </div>
@@ -1075,31 +1087,67 @@ async function loadCalendarData() {
         }
 
         // --- STREAMING_CHUNK:Calendar Logic ---
-        function generateSlots() {
-            slots = [];
-            let [hS, mS] = settings.start.split(':').map(Number);
-            let [hE, mE] = settings.end.split(':').map(Number);
+        function generateSlotsForDates(datesArray) {
+            let slotsSet = new Set();
+            let step = parseInt(settings.interval) || 30;
+            
+            datesArray.forEach(d => {
+                let isSaturdayIntensive = d.getDay() === 6 && settings.saturdayIntensive;
+                let hS, mS, hE, mE, breakS = null, breakE = null;
 
-            let breakS = null, breakE = null;
-            if (settings.breakStart && settings.breakEnd) {
-                breakS = parseInt(settings.breakStart.split(':')[0]) * 60 + parseInt(settings.breakStart.split(':')[1]);
-                breakE = parseInt(settings.breakEnd.split(':')[0]) * 60 + parseInt(settings.breakEnd.split(':')[1]);
-            }
-
-            let current = hS * 60 + mS;
-            let end = hE * 60 + mE;
-            let step = parseInt(settings.interval);
-
-            while (current < end) {
-                if (breakS !== null && breakE !== null && current >= breakS && current < breakE) {
-                    current += step;
-                    continue;
+                if (isSaturdayIntensive) {
+                    hS = 8; mS = 30;
+                    hE = 15; mE = 0;
+                    breakS = null; breakE = null;
+                } else {
+                    [hS, mS] = settings.start.split(':').map(Number);
+                    [hE, mE] = settings.end.split(':').map(Number);
+                    if (settings.breakStart && settings.breakEnd) {
+                        breakS = parseInt(settings.breakStart.split(':')[0]) * 60 + parseInt(settings.breakStart.split(':')[1]);
+                        breakE = parseInt(settings.breakEnd.split(':')[0]) * 60 + parseInt(settings.breakEnd.split(':')[1]);
+                    }
                 }
+
+                let current = hS * 60 + mS;
+                let end = hE * 60 + mE;
+
+                while (current <= end) {
+                    if (breakS !== null && breakE !== null && current >= breakS && current < breakE) {
+                        current += step;
+                        continue;
+                    }
+                    slotsSet.add(current);
+                    current += step;
+                }
+            });
+
+            let sorted = Array.from(slotsSet).sort((a,b) => a - b);
+            slots = sorted.map(current => {
                 let h = Math.floor(current / 60);
                 let m = current % 60;
-                slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
-                current += step;
+                return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+            });
+        }
+
+        function generateSlots() {
+            let dates = [];
+            const view = views[currentViewIndex] || 'day';
+            if (view === 'day' || view === 'month') {
+                dates.push(currentDate);
+            } else if (view === '3days') {
+                dates.push(new Date(currentDate));
+                let d2 = new Date(currentDate); d2.setDate(d2.getDate() + 1); dates.push(d2);
+                let d3 = new Date(currentDate); d3.setDate(d3.getDate() + 2); dates.push(d3);
+            } else if (view === 'week') {
+                const start = new Date(currentDate);
+                const day = start.getDay();
+                start.setDate(start.getDate() - day + (day === 0 ? -6 : 1));
+                for(let i=0; i<7; i++) {
+                    let d = new Date(start); d.setDate(d.getDate() + i);
+                    dates.push(d);
+                }
             }
+            generateSlotsForDates(dates);
         }
 
         function hasBreakGap(index) {
@@ -1139,6 +1187,7 @@ async function loadCalendarData() {
 
         // --- STREAMING_CHUNK:Rendering Main Views ---
         function renderCalendar() {
+            generateSlots();
             const container = document.getElementById('calendar-container');
             const dateDisplay = document.getElementById('current-date-display');
             const view = views[currentViewIndex];
@@ -1217,23 +1266,31 @@ async function loadCalendarData() {
         }
 
         function render3DaysView(container) {
-            const daysToShow = 3;
-            const startOfView = new Date(currentDate);
-            const wNum = getWeekNumber(startOfView);
             let html = `
-                <div class="flex flex-col h-full w-full bg-white dark:bg-gray-800 rounded-lg shadow border dark:border-gray-700 min-w-[500px]">
+                <div class="flex flex-col h-full w-full bg-white dark:bg-gray-800 rounded-lg shadow border dark:border-gray-700 min-w-0">
                     <div class="flex-1 flex flex-col overflow-auto relative rounded-b-lg">
                         <div class="flex border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 sticky top-0 z-20 shadow-sm">
                             <div class="w-10 md:w-12 border-r border-indigo-700 dark:border-indigo-500 bg-indigo-600 text-white flex flex-col items-center justify-center shadow-inner shrink-0">
-                                <span class="text-[8px] uppercase tracking-wider opacity-80">Semana</span>
-                                <span class="text-sm font-bold">${wNum}</span>
+                                <span class="text-[8px] uppercase tracking-wider opacity-80">3 Días</span>
                             </div>`;
 
             const viewDates = [];
-            for (let i = 0; i < daysToShow; i++) {
-                const d = new Date(startOfView);
+            for (let i = 0; i < 3; i++) {
+                const d = new Date(currentDate);
                 d.setDate(d.getDate() + i);
                 viewDates.push(d);
+            }
+
+            let currentSlotTypeHeader = 'normal';
+            viewDates.forEach((d, index) => {
+                const isSatIntensive = d.getDay() === 6 && settings.saturdayIntensive;
+                const type = isSatIntensive ? 'intensive' : 'normal';
+
+                if (type !== currentSlotTypeHeader && index !== 0) {
+                    html += `<div class="w-10 md:w-12 border-r dark:border-gray-700 shrink-0 bg-gray-50 dark:bg-gray-900/50 flex flex-col items-center justify-center shadow-inner"><span class="text-[8px] uppercase tracking-wider opacity-80 font-bold">Horas</span></div>`;
+                }
+                currentSlotTypeHeader = type;
+
                 const dStr = getLocalISODate(d);
                 const isToday = dStr === getLocalISODate(new Date());
                 const isHoliday = isDateHoliday(dStr);
@@ -1248,21 +1305,40 @@ async function loadCalendarData() {
                                     <span class="text-pink-700 dark:text-pink-300 w-1/2 py-1.5 bg-pink-50 dark:bg-pink-900/20 border-l dark:border-gray-700">Nuri</span>
                                 </div>
                             </div>`;
-            }
+            });
+
             html += `
                         </div>
                         <div class="flex-1 flex relative">
                             <div class="w-10 md:w-12 border-r dark:border-gray-700 flex flex-col shrink-0">`;
+
+            generateSlotsForDates([viewDates[0]]);
             slots.forEach((time, i) => {
                 html += `<div class="flex-1 border-b dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center justify-center min-h-[1.5rem] py-0 ${hasBreakGap(i) ? 'border-t-4 border-t-purple-500' : ''} ${i % 2 === 0 ? '' : 'bg-gray-100/50 dark:bg-gray-700/30'}" style="min-height: 2.5rem;">${time}</div>`;
             });
             html += `</div>`;
 
-            viewDates.forEach(d => {
+            let currentSlotTypeBody = viewDates[0].getDay() === 6 && settings.saturdayIntensive ? 'intensive' : 'normal';
+
+            viewDates.forEach((d, index) => {
                 const dStr = getLocalISODate(d);
                 const isHoliday = isDateHoliday(dStr);
                 const eventsVero = events.filter(e => e.dateStr === dStr && (e.calendar === 'vero' || !e.calendar));
                 const eventsNuri = events.filter(e => e.dateStr === dStr && e.calendar === 'nuri');
+
+                const isSatIntensive = d.getDay() === 6 && settings.saturdayIntensive;
+                const type = isSatIntensive ? 'intensive' : 'normal';
+
+                generateSlotsForDates([d]);
+
+                if (type !== currentSlotTypeBody && index !== 0) {
+                    html += `<div class="w-10 md:w-12 border-r dark:border-gray-700 flex flex-col shrink-0">`;
+                    slots.forEach((time, i) => {
+                        html += `<div class="flex-1 border-b dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center justify-center min-h-[1.5rem] py-0 ${hasBreakGap(i) ? 'border-t-4 border-t-purple-500' : ''} ${i % 2 === 0 ? '' : 'bg-gray-100/50 dark:bg-gray-700/30'}" style="min-height: 2.5rem;">${time}</div>`;
+                    });
+                    html += `</div>`;
+                }
+                currentSlotTypeBody = type;
 
                 html += `<div class="flex-1 flex border-r dark:border-gray-700 last:border-0 relative min-w-[200px] ${isHoliday ? 'bg-red-100 dark:bg-red-900/30' : ''}">`;
                 
@@ -1285,6 +1361,8 @@ async function loadCalendarData() {
 
             html += `</div></div></div>`;
             container.innerHTML = html;
+            
+            generateSlots();
         }
 
         function renderWeekView(container) {
@@ -1319,6 +1397,18 @@ async function loadCalendarData() {
                 const d = new Date(startOfWeek);
                 d.setDate(d.getDate() + i);
                 weekDates.push(d);
+            }
+
+            let currentSlotTypeHeader = 'normal';
+            weekDates.forEach((d, index) => {
+                const isSatIntensive = d.getDay() === 6 && settings.saturdayIntensive;
+                const type = isSatIntensive ? 'intensive' : 'normal';
+
+                if (type !== currentSlotTypeHeader && index !== 0) {
+                    html += `<div class="w-10 md:w-12 border-r dark:border-gray-700 shrink-0 bg-gray-50 dark:bg-gray-900/50 flex flex-col items-center justify-center shadow-inner"><span class="text-[8px] uppercase tracking-wider opacity-80 font-bold">Horas</span></div>`;
+                }
+                currentSlotTypeHeader = type;
+
                 const dStr = getLocalISODate(d);
                 const isToday = dStr === getLocalISODate(new Date());
                 const isHoliday = isDateHoliday(dStr);
@@ -1333,21 +1423,40 @@ async function loadCalendarData() {
                                     <span class="text-pink-700 dark:text-pink-300 w-1/2 py-1.5 bg-pink-50 dark:bg-pink-900/20 border-l dark:border-gray-700">Nuri</span>
                                 </div>
                             </div>`;
-            }
+            });
+
             html += `
                         </div>
                         <div class="flex-1 flex relative">
                             <div class="w-10 md:w-12 border-r dark:border-gray-700 flex flex-col shrink-0">`;
+            
+            generateSlotsForDates([weekDates[0]]);
             slots.forEach((time, i) => {
                 html += `<div class="flex-1 border-b dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center justify-center min-h-[1.5rem] py-0 ${hasBreakGap(i) ? 'border-t-4 border-t-purple-500' : ''} ${i % 2 === 0 ? '' : 'bg-gray-100/50 dark:bg-gray-700/30'}" style="min-height: 2.5rem;">${time}</div>`;
             });
             html += `</div>`;
 
-            weekDates.forEach(d => {
+            let currentSlotTypeBody = weekDates[0].getDay() === 6 && settings.saturdayIntensive ? 'intensive' : 'normal';
+
+            weekDates.forEach((d, index) => {
                 const dStr = getLocalISODate(d);
                 const isHoliday = isDateHoliday(dStr);
                 const eventsVero = events.filter(e => e.dateStr === dStr && (e.calendar === 'vero' || !e.calendar));
                 const eventsNuri = events.filter(e => e.dateStr === dStr && e.calendar === 'nuri');
+
+                const isSatIntensive = d.getDay() === 6 && settings.saturdayIntensive;
+                const type = isSatIntensive ? 'intensive' : 'normal';
+
+                generateSlotsForDates([d]);
+
+                if (type !== currentSlotTypeBody && index !== 0) {
+                    html += `<div class="w-10 md:w-12 border-r dark:border-gray-700 flex flex-col shrink-0">`;
+                    slots.forEach((time, i) => {
+                        html += `<div class="flex-1 border-b dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center justify-center min-h-[1.5rem] py-0 ${hasBreakGap(i) ? 'border-t-4 border-t-purple-500' : ''} ${i % 2 === 0 ? '' : 'bg-gray-100/50 dark:bg-gray-700/30'}" style="min-height: 2.5rem;">${time}</div>`;
+                    });
+                    html += `</div>`;
+                }
+                currentSlotTypeBody = type;
 
                 html += `<div class="flex-1 flex border-r dark:border-gray-700 last:border-0 relative min-w-[200px] ${isHoliday ? 'bg-red-100 dark:bg-red-900/30' : ''}">`;
                 
@@ -1370,8 +1479,10 @@ async function loadCalendarData() {
                 html += `</div>`;
             });
 
-            html += `</div></div>`;
+            html += `</div></div></div>`;
             container.innerHTML = html;
+            
+            generateSlots();
         }
 
         function openEventCard(e, id) {
@@ -1784,6 +1895,9 @@ async function loadCalendarData() {
             if (document.getElementById('show-weekends-toggle')) {
                 document.getElementById('show-weekends-toggle').checked = settings.showWeekends !== false;
             }
+            if (document.getElementById('saturday-intensive-toggle')) {
+                document.getElementById('saturday-intensive-toggle').checked = settings.saturdayIntensive === true;
+            }
 
             // Set Select values safely
             const setSelectVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
@@ -1822,9 +1936,19 @@ async function loadCalendarData() {
             renderMiniCalendar();
         }
 
+        function toggleSaturdayIntensive() {
+            settings.saturdayIntensive = document.getElementById('saturday-intensive-toggle').checked;
+            applySettings();
+            renderCalendar();
+            showToast(settings.saturdayIntensive ? 'Sábado Intensivo activado' : 'Sábado Intensivo desactivado');
+        }
+
         function saveSettings() {
             if (document.getElementById('show-weekends-toggle')) {
                 settings.showWeekends = document.getElementById('show-weekends-toggle').checked;
+            }
+            if (document.getElementById('saturday-intensive-toggle')) {
+                settings.saturdayIntensive = document.getElementById('saturday-intensive-toggle').checked;
             }
             settings.start = document.getElementById('time-start').value;
             settings.end = document.getElementById('time-end').value;
