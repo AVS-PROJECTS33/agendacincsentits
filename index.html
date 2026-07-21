@@ -1927,8 +1927,6 @@ async function loadCalendarData() {
 
         function goToWeekFromMini(y, m, d) {
             currentDate = new Date(y, m, d);
-            currentViewIndex = 2; // Semana
-            document.getElementById('view-toggle-btn').innerText = `Vista: Semana`;
             renderCalendar();
             miniCalendarDate = new Date(currentDate);
             renderMiniCalendar();
