@@ -731,7 +731,7 @@ async function loadCalendarData() {
         }
 
         const views = ['day', '3days', 'week', 'month'];
-        let currentViewIndex = 2; // 2 = week
+        let currentViewIndex = window.innerWidth < 768 ? 0 : 1; // 0 = day, 1 = 3days
         let currentDate = new Date();
         let miniCalendarDate = new Date();
 
@@ -1791,26 +1791,6 @@ async function loadCalendarData() {
                 let classes = "text-center py-1 text-[10px] rounded cursor-pointer transition-colors ";
                 if (!isCurrentMonth) classes += "text-gray-300 dark:text-gray-600 ";
                 else if (isSelected) classes += "bg-primary text-white font-bold ";
-                else if (isToday) classes += "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 font-bold ";
-                else classes += "hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-300 ";
-
-                html += `<div class="${classes}" onclick="goToWeekFromMini(${iterDate.getFullYear()}, ${iterDate.getMonth()}, ${iterDate.getDate()})">${iterDate.getDate()}</div>`;
-                iterDate.setDate(iterDate.getDate() + 1);
-            }
-            container.innerHTML = html;
-        }
-
-        function changeMiniMonth(dir) {
-            miniCalendarDate.setMonth(miniCalendarDate.getMonth() + dir);
-            renderMiniCalendar();
-        }
-
-        function goToWeekFromMini(y, m, d) {
-            currentDate = new Date(y, m, d);
-            currentViewIndex = 1; // Semana
-            document.getElementById('view-toggle-btn').innerText = `Vista: Semana`;
-            renderCalendar();
-            miniCalendarDate = new Date(currentDate);
             renderMiniCalendar();
         }
 
