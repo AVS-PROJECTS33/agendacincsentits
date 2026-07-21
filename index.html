@@ -700,6 +700,18 @@ async function loadCalendarData() {
                 }
             } catch (error) {
                 console.error("Error cargando de Firebase:", error);
+                if (typeof showToast === 'function') showToast("Error de conexión a Firebase. Cargando datos locales...", "error");
+                const localData = localStorage.getItem('vero_calendar_state');
+                if (localData) {
+                    try {
+                        const data = JSON.parse(localData);
+                        if (data.events) events = data.events;
+                        if (data.contacts) contacts = data.contacts;
+                        if (data.holidays) holidays = data.holidays;
+                        if (data.settings) settings = data.settings;
+                        if (data.legendColors) legendColors = data.legendColors;
+                    } catch(e) {}
+                }
             }
         }
 
@@ -752,11 +764,13 @@ async function loadCalendarData() {
         }
 
         async function saveState() {
+            localStorage.setItem('vero_calendar_state', JSON.stringify({ events, contacts, holidays, settings, legendColors }));
             try {
                 const docRef = doc(db, 'app_data', 'main');
                 await setDoc(docRef, { events, contacts, holidays, settings, legendColors }, { merge: true });
             } catch (e) {
                 console.error("Error guardando state en Firebase", e);
+                if (typeof showToast === 'function') showToast("Error de red. Datos guardados solo localmente.", "error");
             }
         }
 
