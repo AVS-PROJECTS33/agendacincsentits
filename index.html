@@ -688,7 +688,10 @@ async function loadCalendarData() {
             };
 
             let localTimestamp = 0;
-            const localData = localStorage.getItem('vero_calendar_state');
+            const localKey = currentCalendar === 'vero' ? 'vero_calendar_state' : 'nuri_calendar_state';
+            const docKey = currentCalendar === 'vero' ? 'main' : 'nuri_main';
+            
+            const localData = localStorage.getItem(localKey);
             if (localData) {
                 try {
                     const data = JSON.parse(localData);
@@ -703,7 +706,7 @@ async function loadCalendarData() {
             if (typeof renderCalendar === 'function') renderCalendar();
 
             try {
-                const docRef = doc(db, 'app_data', 'main');
+                const docRef = doc(db, 'app_data', docKey);
                 const fetchPromise = getDoc(docRef);
                 const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 4000));
                 const snap = await Promise.race([fetchPromise, timeoutPromise]);
@@ -717,10 +720,14 @@ async function loadCalendarData() {
                         if (data.holidays) holidays = data.holidays;
                         if (data.settings) settings = data.settings;
                         if (data.legendColors) legendColors = data.legendColors;
-                        localStorage.setItem('vero_calendar_state', JSON.stringify({ events, contacts, holidays, settings, legendColors, timestamp: cloudTimestamp }));
+                        localStorage.setItem(localKey, JSON.stringify({ events, contacts, holidays, settings, legendColors, timestamp: cloudTimestamp }));
                         if (typeof renderCalendar === 'function') renderCalendar();
                         if (typeof renderMiniCalendar === 'function') renderMiniCalendar();
                     } else if (localTimestamp > cloudTimestamp && localTimestamp > 0) {
+                        saveState();
+                    }
+                } else {
+                    if (localTimestamp > 0) {
                         saveState();
                     }
                 }
@@ -779,10 +786,14 @@ async function loadCalendarData() {
         }
 
         async function saveState() {
-            localStorage.setItem('vero_calendar_state', JSON.stringify({ events, contacts, holidays, settings, legendColors }));
+            const currentTimestamp = Date.now();
+            const localKey = currentCalendar === 'vero' ? 'vero_calendar_state' : 'nuri_calendar_state';
+            const docKey = currentCalendar === 'vero' ? 'main' : 'nuri_main';
+
+            localStorage.setItem(localKey, JSON.stringify({ events, contacts, holidays, settings, legendColors, timestamp: currentTimestamp }));
             try {
-                const docRef = doc(db, 'app_data', 'main');
-                await setDoc(docRef, { events, contacts, holidays, settings, legendColors }, { merge: true });
+                const docRef = doc(db, 'app_data', docKey);
+                await setDoc(docRef, { events, contacts, holidays, settings, legendColors, timestamp: currentTimestamp }, { merge: true });
             } catch (e) {
                 console.error("Error guardando state en Firebase", e);
                 if (typeof showToast === 'function') showToast("Error de red. Datos guardados solo localmente.", "error");
