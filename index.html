@@ -111,6 +111,11 @@
             }
         }
     </style>
+    <style>
+        input[type="text"], input[type="tel"], textarea {
+            cursor: default !important;
+        }
+    </style>
 </head>
 
 <body
@@ -247,33 +252,35 @@
         class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto relative">
             <button onclick="closeModal('info-modal')" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 text-2xl font-bold">&times;</button>
-            <h3 id="info-calendar-title" class="text-2xl font-bold mb-4 text-emerald-700 dark:text-emerald-400">ℹ️ ¿Cómo funciona Calendario VERO?</h3>
+            <h3 id="info-calendar-title" class="text-2xl font-bold mb-4 text-emerald-700 dark:text-emerald-400">ℹ️ ¿Cómo funciona Calendario CINCSENTITS?</h3>
             
             <div class="space-y-4 text-sm text-gray-700 dark:text-gray-300">
                 <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700">
-                    <h4 class="font-bold text-lg mb-2 text-primary">📅 Las Vistas (Día, Semana, Mes)</h4>
+                    <h4 class="font-bold text-lg mb-2 text-primary">📅 Navegación y Vistas</h4>
                     <ul class="list-disc pl-5 space-y-1">
-                        <li><strong>Vista Día y Semana:</strong> Puedes hacer clic en cualquier recuadro horario libre para <strong>crear un nuevo evento</strong>. Si haces clic en la cabecera de un día específico, se abrirán las <strong>Opciones Rápidas</strong> (bloquear franjas, enviar recordatorios masivos o marcar festivos). La cuadrícula tiene <strong>filas intercaladas (blanco/gris)</strong> para guiar la vista fácilmente.</li>
-                        <li><strong>Vista Mes:</strong> Muestra un resumen general. Haz clic en cualquier recuadro de un día para ir rápidamente a su vista detallada.</li>
-                        <li><strong>Zoom:</strong> El panel "🔍 Zoom" de la barra lateral ajusta el tamaño visual para mostrarte más o menos horas en pantalla.</li>
+                        <li><strong>Agendas Simultáneas:</strong> Cada día está dividido en dos columnas (<strong>VERO</strong> y <strong>NURI</strong>) para gestionar ambas agendas a la vez de forma paralela sin cambiar de pantalla.</li>
+                        <li><strong>Vistas Disponibles:</strong> Puedes alternar entre vistas de Día, 3 Días, Semana y Mes pulsando el botón central de la barra superior.</li>
+                        <li><strong>Festivos:</strong> Los domingos y lunes están bloqueados y marcados en gris oscuro de manera automática.</li>
+                        <li><strong>Zoom:</strong> Usa los botones <strong>+ y -</strong> (junto al botón de Hoy en la barra superior) para acercar o alejar la pantalla y ver las celdas más grandes.</li>
                     </ul>
                 </div>
 
                 <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700">
                     <h4 class="font-bold text-lg mb-2 text-primary">📝 Crear y Editar Eventos</h4>
                     <ul class="list-disc pl-5 space-y-1">
-                        <li>Al agendar una cita, los datos se guardan en tus <strong>Contactos</strong> automáticamente. Si el cliente ya existe, al escribir su nombre <strong>se autocompletará</strong>.</li>
-                        <li>Para <strong>Editar o Eliminar</strong>, haz clic sobre el evento en el calendario. Allí también podrás enviarle un <strong>Recordatorio</strong> por WhatsApp. Al pulsar "✏️ Editar", la aplicación <strong>solo</strong> te permite modificar las <span class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-1 rounded font-bold">Observaciones</span>. Aparecerá un <span class="inline-flex items-center justify-center w-4 h-4 bg-yellow-400 text-yellow-900 rounded-full text-[10px] font-black border border-yellow-500 align-text-bottom shadow-sm">!</span> si has escrito notas.</li>
+                        <li>Haz clic en un hueco de VERO o NURI para agendar una cita. Si el cliente ya existe en <strong>Contactos</strong>, su nombre y teléfono <strong>se autocompletarán</strong> al escribir.</li>
+                        <li><strong>Duración (15 o 30 min):</strong> Elige si la cita ocupa la franja <strong>Completa</strong>, o si prefieres ubicarla solo en la <strong>1ª mitad</strong> o en la <strong>2ª mitad</strong> para así poner dos eventos en la misma celda.</li>
+                        <li>Para <strong>Editar o Eliminar</strong>, haz clic sobre el evento en el calendario. Allí también podrás enviar un <strong>Recordatorio</strong> por WhatsApp al cliente. Si añades <span class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-1 rounded font-bold">Observaciones</span>, aparecerá un icono de aviso para que sepas que tiene notas.</li>
                     </ul>
                 </div>
 
                 <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700">
                     <h4 class="font-bold text-lg mb-2 text-primary">🛠️ Otras Funcionalidades</h4>
                     <ul class="list-disc pl-5 space-y-1">
-                        <li><strong>Contactos:</strong> Busca, añade, edita o elimina clientes. Aparecerá una doble confirmación antes de borrarlos para evitar errores.</li>
-                        <li><strong>Leyenda Colores:</strong> Puedes crear y gestionar distintos tipos de citas, asignándoles colores y tiempos por defecto.</li>
-                        <li><strong>Calendarios:</strong> Pulsa el botón principal para alternar entre el calendario de <strong>VERO</strong> y el de <strong>NURI</strong>, manteniendo la información separada para cada una.</li>
-                        <li><strong>Ajustes:</strong> Organizados por <em>Aspecto Visual</em> (Modo Oscuro, fondo), <em>Horarios</em> (Hora Inicio/Fin, Descansos, ocultar/mostrar domingo y lunes, duración de la celda) y <em>Comunicación</em> (Mensaje de WhatsApp).</li>
+                        <li><strong>Sincronización Automática:</strong> El calendario se refresca solo cada 30 segundos. Si agendas algo desde el móvil, aparecerá mágicamente en el PC sin que toques nada.</li>
+                        <li><strong>Contactos:</strong> Puedes buscar, añadir, editar o eliminar clientes desde el menú de la izquierda.</li>
+                        <li><strong>Leyenda de Colores:</strong> Puedes gestionar distintos tipos de citas, asignándoles colores para diferenciarlas a simple vista.</li>
+                        <li><strong>Ajustes ⚙️:</strong> Modifica el aspecto visual (Modo Oscuro, fondo), el horario laboral (Hora Inicio/Fin, Descansos) y la plantilla para el Mensaje de WhatsApp.</li>
                     </ul>
                 </div>
             </div>
@@ -438,6 +445,26 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
                 <input type="hidden" id="ev-color" value="">
             </div>
             
+            <!-- Selector de Duración -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Duración</label>
+                <div class="flex gap-2">
+                    <div class="flex-1 flex flex-col">
+                        <button type="button" onclick="selectDuration('full')" id="btn-dur-full" class="px-3 py-1.5 bg-primary text-white rounded text-sm font-medium transition-colors w-full">Completo</button>
+                        <span id="label-dur-full" class="text-[10px] text-center text-gray-500 mt-1 font-medium"></span>
+                    </div>
+                    <div class="flex-1 flex flex-col">
+                        <button type="button" onclick="selectDuration('first15')" id="btn-dur-first15" class="px-3 py-1.5 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded text-sm font-medium transition-colors w-full">1ª mitad</button>
+                        <span id="label-dur-first15" class="text-[10px] text-center text-gray-500 mt-1 font-medium"></span>
+                    </div>
+                    <div class="flex-1 flex flex-col">
+                        <button type="button" onclick="selectDuration('second15')" id="btn-dur-second15" class="px-3 py-1.5 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded text-sm font-medium transition-colors w-full">2ª mitad</button>
+                        <span id="label-dur-second15" class="text-[10px] text-center text-gray-500 mt-1 font-medium"></span>
+                    </div>
+                </div>
+                <input type="hidden" id="ev-duration-type" value="full">
+            </div>
+            
 
             <div class="space-y-3 relative">
                 <div class="relative">
@@ -465,6 +492,7 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
                 <input type="hidden" id="ev-time">
                 <input type="hidden" id="ev-endtime">
                 <input type="hidden" id="ev-calendar">
+                <input type="hidden" id="ev-baseslot">
             </div>
             <div class="mt-5 flex justify-end gap-2">
                 <button onclick="closeModal('event-modal')"
@@ -479,7 +507,7 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
         class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-xs p-5 text-center">
             <h3 class="text-xl font-bold mb-1" id="action-ev-name">Nombre</h3>
-            <p class="text-xs text-gray-500 mb-4" id="action-ev-time">Hora</p>
+            <p class="text-base font-bold text-gray-800 dark:text-gray-200 mb-4" id="action-ev-time">Hora</p>
 
             <div class="flex flex-col gap-2">
                 <button id="action-btn-wa" onclick="sendWAFromAction()"
@@ -766,8 +794,17 @@ async function loadCalendarData() {
             renderCalendar();
             renderMiniCalendar();
             updateContactsList();
-
             
+            setInterval(() => {
+                const modals = ['info-modal', 'settings-modal', 'legend-modal', 'event-modal', 'event-action-modal', 'day-action-modal', 'custom-range-modal', 'contacts-modal', 'add-contact-modal', 'edit-contact-modal'];
+                const isAnyModalOpen = modals.some(id => {
+                    const el = document.getElementById(id);
+                    return el && !el.classList.contains('hidden');
+                });
+                if (!isAnyModalOpen) {
+                    loadCalendarData();
+                }
+            }, 30000);
         };
 
         function populateTimeSelects() {
@@ -866,6 +903,53 @@ async function loadCalendarData() {
             return evDate < new Date();
         }
 
+        function isDateHoliday(dateStr) {
+            if (holidays.includes(dateStr)) return true;
+            const [y, m, d] = dateStr.split('-');
+            const dateObj = new Date(y, m - 1, d);
+            const dayOfWeek = dateObj.getDay();
+            return dayOfWeek === 0 || dayOfWeek === 1; // 0 = Domingo, 1 = Lunes
+        }
+
+        function selectDuration(type) {
+            document.getElementById('ev-duration-type').value = type;
+            document.getElementById('ev-endtime').value = '';
+            const btns = {
+                'full': document.getElementById('btn-dur-full'),
+                'first15': document.getElementById('btn-dur-first15'),
+                'second15': document.getElementById('btn-dur-second15')
+            };
+            Object.values(btns).forEach(b => {
+                if (b) {
+                    b.classList.remove('bg-primary', 'text-white');
+                    b.classList.add('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
+                }
+            });
+            if (btns[type]) {
+                btns[type].classList.add('bg-primary', 'text-white');
+                btns[type].classList.remove('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
+            }
+            if (typeof updateDurationLabels === 'function') updateDurationLabels();
+        }
+
+        function updateDurationLabels() {
+            const baseTimeStr = document.getElementById('ev-baseslot').value || document.getElementById('ev-time').value;
+            if (!baseTimeStr) return;
+            const fullLabel = document.getElementById('label-dur-full');
+            const first15Label = document.getElementById('label-dur-first15');
+            const second15Label = document.getElementById('label-dur-second15');
+            
+            const interval = parseInt(settings.interval) || 30;
+            const endFull = addMinutesToTime(baseTimeStr, interval);
+            const endFirst = addMinutesToTime(baseTimeStr, 15);
+            const startSecond = addMinutesToTime(baseTimeStr, 15);
+            const endSecond = addMinutesToTime(baseTimeStr, 30);
+            
+            if (fullLabel) fullLabel.innerText = `${baseTimeStr} - ${endFull}`;
+            if (first15Label) first15Label.innerText = `${baseTimeStr} - ${endFirst}`;
+            if (second15Label) second15Label.innerText = `${startSecond} - ${endSecond}`;
+        }
+
         // --- STREAMING_CHUNK:Calendar Logic ---
         function generateSlots() {
             slots = [];
@@ -962,7 +1046,7 @@ async function loadCalendarData() {
         function renderDayView(container) {
             const dateStr = getLocalISODate(currentDate);
             const isToday = dateStr === getLocalISODate(new Date());
-            const isHoliday = holidays.includes(dateStr);
+            const isHoliday = isDateHoliday(dateStr);
             const wNum = getWeekNumber(currentDate);
             const eventsVero = events.filter(e => e.dateStr === dateStr && (e.calendar === 'vero' || !e.calendar));
             const eventsNuri = events.filter(e => e.dateStr === dateStr && e.calendar === 'nuri');
@@ -1028,7 +1112,7 @@ async function loadCalendarData() {
                 viewDates.push(d);
                 const dStr = getLocalISODate(d);
                 const isToday = dStr === getLocalISODate(new Date());
-                const isHoliday = holidays.includes(dStr);
+                const isHoliday = isDateHoliday(dStr);
                 html += `
                             <div class="flex-1 text-center border-r dark:border-gray-700 last:border-0 min-w-[200px] flex flex-col ${isToday && !isHoliday ? 'bg-indigo-600 shadow-md transform scale-[1.02] z-10 border-b-4 border-indigo-800' : 'bg-gray-50 dark:bg-gray-900/50'} ${isHoliday ? 'bg-red-500 text-white dark:bg-red-700' : ''}">
                                 <div class="p-2 cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-700 flex-1 flex flex-col items-center justify-center ${isToday && !isHoliday ? 'text-white' : ''}" onclick="openDayActionModal('${dStr}')">
@@ -1052,7 +1136,7 @@ async function loadCalendarData() {
 
             viewDates.forEach(d => {
                 const dStr = getLocalISODate(d);
-                const isHoliday = holidays.includes(dStr);
+                const isHoliday = isDateHoliday(dStr);
                 const eventsVero = events.filter(e => e.dateStr === dStr && (e.calendar === 'vero' || !e.calendar));
                 const eventsNuri = events.filter(e => e.dateStr === dStr && e.calendar === 'nuri');
 
@@ -1113,7 +1197,7 @@ async function loadCalendarData() {
                 weekDates.push(d);
                 const dStr = getLocalISODate(d);
                 const isToday = dStr === getLocalISODate(new Date());
-                const isHoliday = holidays.includes(dStr);
+                const isHoliday = isDateHoliday(dStr);
                 html += `
                             <div class="flex-1 text-center border-r dark:border-gray-700 last:border-0 min-w-[200px] flex flex-col ${isToday && !isHoliday ? 'bg-indigo-600 shadow-md transform scale-[1.02] z-10 border-b-4 border-indigo-800' : 'bg-gray-50 dark:bg-gray-900/50'} ${isHoliday ? 'bg-red-500 text-white dark:bg-red-700' : ''}">
                                 <div class="p-2 cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-700 flex-1 flex flex-col items-center justify-center ${isToday && !isHoliday ? 'text-white' : ''}" onclick="openDayActionModal('${dStr}')">
@@ -1137,7 +1221,7 @@ async function loadCalendarData() {
 
             weekDates.forEach(d => {
                 const dStr = getLocalISODate(d);
-                const isHoliday = holidays.includes(dStr);
+                const isHoliday = isDateHoliday(dStr);
                 const eventsVero = events.filter(e => e.dateStr === dStr && (e.calendar === 'vero' || !e.calendar));
                 const eventsNuri = events.filter(e => e.dateStr === dStr && e.calendar === 'nuri');
 
@@ -1222,6 +1306,31 @@ async function loadCalendarData() {
             document.getElementById('ev-time').value = ev.timeStr;
             document.getElementById('ev-endtime').value = ev.endTimeStr || '';
             document.getElementById('ev-calendar').value = ev.calendar || 'vero';
+
+            if (typeof selectDuration === 'function') {
+                if (ev.endTimeStr) {
+                    const diff = timeToMinutes(ev.endTimeStr) - timeToMinutes(ev.timeStr);
+                    if (diff === 15) {
+                        const m = parseInt(ev.timeStr.split(':')[1]);
+                        if (m === 15 || m === 45) {
+                            document.getElementById('ev-baseslot').value = addMinutesToTime(ev.timeStr, -15);
+                            selectDuration('second15');
+                        } else {
+                            document.getElementById('ev-baseslot').value = ev.timeStr;
+                            selectDuration('first15');
+                        }
+                    } else {
+                        document.getElementById('ev-baseslot').value = ev.timeStr;
+                        selectDuration('full');
+                    }
+                } else {
+                    document.getElementById('ev-baseslot').value = ev.timeStr;
+                    selectDuration('full');
+                }
+                
+                document.getElementById('ev-endtime').value = ev.endTimeStr || '';
+                document.getElementById('ev-time').value = ev.timeStr;
+            }
 
             renderEventTypeSelector(ev.color || '');
             openModal('event-modal');
@@ -1639,7 +1748,7 @@ async function loadCalendarData() {
             }
         }
 
-        let currentZoom = 0.9;
+        let currentZoom = 1.0;
         function applyZoomToCalendar() {
             const container = document.getElementById('calendar-container');
             if (container && container.firstElementChild) {
@@ -1727,7 +1836,7 @@ async function loadCalendarData() {
                 const isCurrentMonth = iterDate.getMonth() === month;
                 const dStr = getLocalISODate(iterDate);
                 const dayEvs = events.filter(e => e.dateStr === dStr);
-                const isHoliday = holidays.includes(dStr);
+                const isHoliday = isDateHoliday(dStr);
 
                 let classes = "border-r border-b dark:border-gray-700 p-1 flex flex-col hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer overflow-hidden transition-colors relative ";
                 if (!isCurrentMonth) classes += "bg-gray-50/50 dark:bg-gray-800/50 text-gray-400 ";
@@ -1866,24 +1975,38 @@ async function loadCalendarData() {
             return (slots.length - 1) + ((evMins - lastMins) / step);
         }
 
-        function isSlotOccupied(dateStr, timeStr) {
+        function isSlotOccupied(dateStr, timeStr, calendar = 'vero') {
             const interval = parseInt(settings.interval);
-            const newStart = timeToMinutes(timeStr);
-            return events.some(e => {
-                if (e.dateStr !== dateStr || e.id === editingEventId) return false;
-                let existingStart = timeToMinutes(e.timeStr);
-                let existingEnd = e.endTimeStr ? timeToMinutes(e.endTimeStr) : existingStart + interval;
-                return (newStart >= existingStart) && (newStart < existingEnd);
+            const slotStart = timeToMinutes(timeStr);
+            const slotEnd = slotStart + interval;
+            
+            let occupiedMinutes = 0;
+            events.forEach(e => {
+                if (e.dateStr !== dateStr || e.id === editingEventId) return;
+                const eCal = e.calendar || 'vero';
+                if (eCal !== calendar) return;
+
+                let eStart = timeToMinutes(e.timeStr);
+                let eEnd = e.endTimeStr ? timeToMinutes(e.endTimeStr) : eStart + interval;
+                
+                let overlapStart = Math.max(slotStart, eStart);
+                let overlapEnd = Math.min(slotEnd, eEnd);
+                
+                if (overlapStart < overlapEnd) {
+                    occupiedMinutes += (overlapEnd - overlapStart);
+                }
             });
+            return occupiedMinutes >= interval;
         }
 
-        function handleSlotClick(e, dateStr, timeStr) {
+        function handleSlotClick(e, dateStr, timeStr, calendar = 'vero') {
             e.stopPropagation();
-            if (isSlotOccupied(dateStr, timeStr)) {
-                return showToast('Esta franja horaria ya estÃ¡ ocupada', 'error');
+            if (isSlotOccupied(dateStr, timeStr, calendar)) {
+                return showToast('Esta franja horaria ya está completamente ocupada', 'error');
             }
             editingEventId = null;
             document.getElementById('event-modal-title').innerText = 'Nuevo Evento';
+            document.getElementById('ev-calendar').value = calendar;
 
             const nameEl = document.getElementById('ev-name');
             const phoneEl = document.getElementById('ev-phone');
@@ -1899,6 +2022,9 @@ async function loadCalendarData() {
             document.getElementById('ev-date').value = dateStr;
             document.getElementById('ev-time').value = timeStr;
             document.getElementById('ev-endtime').value = '';
+            document.getElementById('ev-baseslot').value = timeStr;
+
+            if (typeof selectDuration === 'function') selectDuration('full');
 
             document.getElementById('autocomplete-list').classList.add('hidden');
             renderEventTypeSelector();
@@ -1906,7 +2032,7 @@ async function loadCalendarData() {
         }
 
         function handleMonthDayClick(dateStr) {
-            if (holidays.includes(dateStr)) return showToast('Este dÃ­a es festivo', 'error');
+            if (isDateHoliday(dateStr)) return showToast('Este día es festivo', 'error');
             handleSlotClick(new Event('click'), dateStr, slots[0] || '09:00');
         }
 
@@ -1914,27 +2040,39 @@ async function loadCalendarData() {
             const name = document.getElementById('ev-name').value.trim();
             const dateStr = document.getElementById('ev-date').value;
             let timeStr = document.getElementById('ev-time').value;
+            let baseTimeStr = document.getElementById('ev-baseslot').value || timeStr;
             const phone = document.getElementById('ev-phone').value.trim();
             const obs = document.getElementById('ev-obs').value.trim();
             let endTimeStr = document.getElementById('ev-endtime').value;
             const color = document.getElementById('ev-color').value;
+            const durType = document.getElementById('ev-duration-type').value;
+            const calendar = document.getElementById('ev-calendar').value || 'vero';
 
             const lcEvent = legendColors.find(l => l.color === color);
 
             if (!name) return showToast('El nombre o evento es obligatorio', 'error');
-            if (!phone) return showToast('El nÃºmero de telÃ©fono es obligatorio', 'error');
+            if (!phone) return showToast('El número de teléfono es obligatorio', 'error');
             
             if (phone) {
                 const phoneRegex = /^[0-9]{9}$/;
                 if (!phoneRegex.test(phone)) {
-                    return showToast('Solo puedes introducir un nÃºmero de telÃ©fono de 9 cifras', 'error');
+                    return showToast('Solo puedes introducir un número de teléfono de 9 cifras', 'error');
                 }
             }
 
             const interval = parseInt(settings.interval);
             
             if (!endTimeStr) {
-                endTimeStr = addMinutesToTime(timeStr, interval);
+                if (durType === 'full') {
+                    timeStr = baseTimeStr;
+                    endTimeStr = addMinutesToTime(baseTimeStr, interval);
+                } else if (durType === 'first15') {
+                    timeStr = baseTimeStr;
+                    endTimeStr = addMinutesToTime(baseTimeStr, 15);
+                } else if (durType === 'second15') {
+                    timeStr = addMinutesToTime(baseTimeStr, 15);
+                    endTimeStr = addMinutesToTime(baseTimeStr, 30);
+                }
             }
 
             // Nueva lÃ³gica de colisiones: comprobar rangos de tiempo [timeStr, endTimeStr)
@@ -1943,6 +2081,8 @@ async function loadCalendarData() {
             
             const collision = events.some(e => {
                 if (e.dateStr !== dateStr || e.id === editingEventId) return false;
+                const eCal = e.calendar || 'vero';
+                if (eCal !== calendar) return false;
                 
                 let existingStart = timeToMinutes(e.timeStr);
                 let existingEnd;
@@ -1954,11 +2094,11 @@ async function loadCalendarData() {
                     existingEnd = existingStart + interval;
                 }
                 
-                // ComprobaciÃ³n de solapamiento: (StartA < EndB) y (EndA > StartB)
+                // Comprobación de solapamiento: (StartA < EndB) y (EndA > StartB)
                 return (newStart < existingEnd) && (newEnd > existingStart);
             });
             
-            if (collision) return showToast('Esta fracciÃ³n horaria ya estÃ¡ ocupada.', 'error');
+            if (collision) return showToast('Esta fracción horaria ya está ocupada.', 'error');
 
             if (phone) {
                 const exist = contacts.find(c => c.name.toLowerCase() === name.toLowerCase());
@@ -1968,9 +2108,9 @@ async function loadCalendarData() {
 
             if (editingEventId) {
                 const idx = events.findIndex(e => e.id === editingEventId);
-                if (idx > -1) events[idx] = { id: editingEventId, name, phone, obs, dateStr, timeStr, endTimeStr, color };
+                if (idx > -1) events[idx] = { id: editingEventId, name, phone, obs, dateStr, timeStr, endTimeStr, color, calendar };
             } else {
-                events.push({ id: Date.now().toString(), name, phone, obs, dateStr, timeStr, endTimeStr, color });
+                events.push({ id: Date.now().toString(), name, phone, obs, dateStr, timeStr, endTimeStr, color, calendar });
             }
             saveState();
             closeModal('event-modal');
@@ -2112,7 +2252,7 @@ async function loadCalendarData() {
         });
 
         Object.assign(window, {
-            openLegendModal, addLegendColor, updateLegendColor, deleteLegendColor, selectEventType,
+            selectDuration, updateDurationLabels, openLegendModal, addLegendColor, updateLegendColor, deleteLegendColor, selectEventType,
             openModal, closeModal, toggleView, changeDate, goToday, changeMiniMonth, goToWeekFromMini,
             handleSlotClick, handleMonthDayClick, saveEvent, openEventCard, editEventFromAction, deleteEventFromAction,
             sendWAFromAction, openDayActionModal, toggleHoliday, sendBulkWA, openCustomRangeModal, saveCustomRange,
