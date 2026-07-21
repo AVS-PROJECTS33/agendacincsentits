@@ -687,31 +687,46 @@ async function loadCalendarData() {
                 waMessage: '¡Hola, {nombre}!\nDesde Cinc sentits estilisme queríamos recordarte tu visita para el {fecha} a las {hora}.\n¿Nos confirmas que todo sigue en pie respondiendo a este mensaje con un "Sí"? \nSi te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperamos!'
             };
 
-            try {
-                const docRef = doc(db, 'app_data', 'main');
-                const snap = await getDoc(docRef);
-                if (snap.exists()) {
-                    const data = snap.data();
+            let localTimestamp = 0;
+            const localData = localStorage.getItem('vero_calendar_state');
+            if (localData) {
+                try {
+                    const data = JSON.parse(localData);
                     if (data.events) events = data.events;
                     if (data.contacts) contacts = data.contacts;
                     if (data.holidays) holidays = data.holidays;
                     if (data.settings) settings = data.settings;
                     if (data.legendColors) legendColors = data.legendColors;
-                }
-            } catch (error) {
-                console.error("Error cargando de Firebase:", error);
-                if (typeof showToast === 'function') showToast("Error de conexión a Firebase. Cargando datos locales...", "error");
-                const localData = localStorage.getItem('vero_calendar_state');
-                if (localData) {
-                    try {
-                        const data = JSON.parse(localData);
+                    if (data.timestamp) localTimestamp = data.timestamp;
+                } catch(e) {}
+            }
+            if (typeof renderCalendar === 'function') renderCalendar();
+
+            try {
+                const docRef = doc(db, 'app_data', 'main');
+                const fetchPromise = getDoc(docRef);
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 4000));
+                const snap = await Promise.race([fetchPromise, timeoutPromise]);
+                
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const cloudTimestamp = data.timestamp || 0;
+                    if (cloudTimestamp > localTimestamp) {
                         if (data.events) events = data.events;
                         if (data.contacts) contacts = data.contacts;
                         if (data.holidays) holidays = data.holidays;
                         if (data.settings) settings = data.settings;
                         if (data.legendColors) legendColors = data.legendColors;
-                    } catch(e) {}
+                        localStorage.setItem('vero_calendar_state', JSON.stringify({ events, contacts, holidays, settings, legendColors, timestamp: cloudTimestamp }));
+                        if (typeof renderCalendar === 'function') renderCalendar();
+                        if (typeof renderMiniCalendar === 'function') renderMiniCalendar();
+                    } else if (localTimestamp > cloudTimestamp && localTimestamp > 0) {
+                        saveState();
+                    }
                 }
+            } catch (error) {
+                console.error("Firebase error:", error);
+                if (typeof showToast === 'function') showToast("Modo sin conexión. Datos guardados en este equipo.", "error");
             }
         }
 
