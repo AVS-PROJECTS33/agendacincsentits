@@ -430,9 +430,12 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
                         <div>
                             <label class="block text-sm font-medium mb-1">Cambiar Contraseña</label>
                             <p class="text-[10px] text-gray-500 mb-2">Sirve para proteger el acceso a la agenda.</p>
-                            <div class="flex gap-2">
-                                <input type="password" id="new-password" placeholder="Nueva contraseña" class="flex-1 border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent">
-                                <button onclick="changePassword()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-medium transition-colors text-sm shadow-sm shrink-0">Guardar</button>
+                            <div class="flex flex-col gap-2">
+                                <input type="password" id="old-password" placeholder="Contraseña actual" class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent">
+                                <div class="flex gap-2">
+                                    <input type="password" id="new-password" placeholder="Nueva contraseña" class="flex-1 border dark:border-gray-600 rounded px-3 py-2 text-sm bg-transparent">
+                                    <button onclick="changePassword()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-medium transition-colors text-sm shadow-sm shrink-0">Guardar</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -769,15 +772,34 @@ window.handleLogin = async function(e) {
 };
 
 window.changePassword = async function() {
+    const oldPass = document.getElementById('old-password').value;
     const newPass = document.getElementById('new-password').value;
-    if (!newPass || newPass.trim() === '') {
-        if (typeof showToast === 'function') showToast('La contraseña no puede estar vacía', 'error');
+    
+    if (!oldPass || oldPass.trim() === '') {
+        if (typeof showToast === 'function') showToast('Debes indicar la contraseña actual', 'error');
         return;
     }
+    if (!newPass || newPass.trim() === '') {
+        if (typeof showToast === 'function') showToast('La nueva contraseña no puede estar vacía', 'error');
+        return;
+    }
+
     try {
         const docRef = doc(db, 'app_data', 'auth');
+        const docSnap = await getDoc(docRef);
+        let currentPassword = 'cincsentits';
+        if (docSnap.exists() && docSnap.data().password) {
+            currentPassword = docSnap.data().password;
+        }
+
+        if (oldPass !== currentPassword) {
+            if (typeof showToast === 'function') showToast('La contraseña actual es incorrecta', 'error');
+            return;
+        }
+
         await setDoc(docRef, { password: newPass }, { merge: true });
         if (typeof showToast === 'function') showToast('Contraseña cambiada correctamente', 'success');
+        document.getElementById('old-password').value = '';
         document.getElementById('new-password').value = '';
     } catch(e) {
         console.error(e);
