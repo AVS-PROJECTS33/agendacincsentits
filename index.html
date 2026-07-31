@@ -1599,7 +1599,9 @@ async function loadCalendarData() {
                 .replace(/\{fecha\}|\[Fecha\]/gi, formatWADate(ev.dateStr))
                 .replace(/\{hora\}|\[Hora\]/gi, ev.timeStr)
                 .replace(/\{nombre\}|\[Nombre\]/gi, ev.name);
-            window.open(`https://wa.me/${ev.phone.replace(/\+/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
+            let phoneStr = ev.phone.replace(/\D/g, '');
+            if (!phoneStr.startsWith('34')) phoneStr = '34' + phoneStr;
+            window.open(`https://wa.me/${phoneStr}?text=${encodeURIComponent(text)}`, '_blank');
         }
 
         function openDayActionModal(dateStr) {
@@ -1633,7 +1635,9 @@ async function loadCalendarData() {
                     .replace(/\{fecha\}|\[Fecha\]/gi, formatWADate(ev.dateStr))
                     .replace(/\{hora\}|\[Hora\]/gi, ev.timeStr)
                     .replace(/\{nombre\}|\[Nombre\]/gi, ev.name);
-                window.open(`https://wa.me/${ev.phone.replace(/\+/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
+                let phoneStr = ev.phone.replace(/\D/g, '');
+                if (!phoneStr.startsWith('34')) phoneStr = '34' + phoneStr;
+                window.open(`https://wa.me/${phoneStr}?text=${encodeURIComponent(text)}`, '_blank');
             });
             closeModal('day-action-modal');
             showToast(`Abriendo ${dayEvents.length} chats... (Permite popups)`);
