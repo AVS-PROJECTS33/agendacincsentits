@@ -206,6 +206,11 @@
                 </div>
 
                 <div class="mt-auto flex flex-col gap-3">
+                    <!-- Botón de Novedades -->
+                    <button onclick="openModal('novedades-modal')"
+                        class="w-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 py-2 rounded-xl font-bold shadow-sm hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all text-sm flex items-center justify-center gap-2 border border-blue-200 dark:border-blue-700">
+                        <span class="text-lg">✨</span> Novedades de Hoy
+                    </button>
                     <!-- Tarjeta de Información -->
                     <button onclick="openModal('info-modal')"
                         class="w-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 py-2 rounded-xl font-bold shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all text-sm flex items-center justify-center gap-2 border border-emerald-200 dark:border-emerald-700">
@@ -272,6 +277,33 @@
     </div>
 
     <!-- MODALES -->
+
+    <!-- Modal de Novedades -->
+    <div id="novedades-modal"
+        class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto relative border-t-4 border-blue-500">
+            <button onclick="closeModal('novedades-modal')" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 text-2xl font-bold">&times;</button>
+            <div class="flex items-center gap-3 mb-6">
+                <span class="text-3xl">✨</span>
+                <h3 class="text-2xl font-bold text-blue-800 dark:text-blue-300">Novedades de Hoy</h3>
+            </div>
+            
+            <div class="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+                <div class="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-100 dark:border-blue-800">
+                    <ul class="text-sm text-blue-900 dark:text-blue-200 space-y-4 list-none leading-relaxed font-medium">
+                        <li class="flex gap-3"><span class="text-xl">📅</span><span><b>Múltiples servicios a la vez:</b> Ahora puedes seleccionar varias citas a la vez para un mismo evento. El tiempo siempre será de 30 mins por defecto.</span></li>
+                        <li class="flex gap-3"><span class="text-xl">👀</span><span><b>Información en un vistazo:</b> La tarjeta del calendario te mostrará las citas con este formato: <i>(Color/Secar)</i> y añadirá un símbolo <b>+</b> grande y claro si combinas varias.</span></li>
+                        <li class="flex gap-3"><span class="text-xl">📋</span><span><b>Resumen completo:</b> Haz clic en cualquier cita combinada y verás una nueva sección super clara con todos los servicios seleccionados y sus colores. Además los botones se resaltan en grande al seleccionarlos.</span></li>
+                        <li class="flex gap-3"><span class="text-xl">✏️</span><span><b>Edición Total:</b> ¡Por fin! Ahora puedes cambiar los tipos de cita, el nombre y el teléfono directamente abriendo la cita y pulsando en "Editar".</span></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeModal('novedades-modal')" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md transition-colors text-sm">¡Genial!</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal de Información -->
     <div id="info-modal"
@@ -574,6 +606,13 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
                 <button onclick="deleteEventFromAction()"
                     class="w-full py-2 bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 rounded font-medium hover:bg-red-200 transition-colors">🗑️
                     Eliminar</button>
+            </div>
+
+            <div id="action-ev-types-container" class="mt-4 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-left hidden">
+                <p class="text-xs font-bold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wider">Tipos de cita</p>
+                <div id="action-ev-types-list" class="flex flex-col gap-2">
+                    <!-- Se inyectan badges de colores -->
+                </div>
             </div>
 
             <div id="action-ev-obs-container"
@@ -932,7 +971,7 @@ async function loadCalendarData() {
             updateContactsList();
             
             setInterval(() => {
-                const modals = ['info-modal', 'settings-modal', 'legend-modal', 'event-modal', 'event-action-modal', 'day-action-modal', 'custom-range-modal', 'contacts-modal', 'add-contact-modal', 'edit-contact-modal'];
+                const modals = ['info-modal', 'novedades-modal', 'settings-modal', 'legend-modal', 'event-modal', 'event-action-modal', 'day-action-modal', 'custom-range-modal', 'contacts-modal', 'add-contact-modal', 'edit-contact-modal'];
                 const isAnyModalOpen = modals.some(id => {
                     const el = document.getElementById(id);
                     return el && !el.classList.contains('hidden');
@@ -1499,7 +1538,23 @@ async function loadCalendarData() {
             const obsContainer = document.getElementById('action-ev-obs-container');
             const obsText = document.getElementById('action-ev-obs');
             const waBtn = document.getElementById('action-btn-wa');
+            const typesContainer = document.getElementById('action-ev-types-container');
+            const typesList = document.getElementById('action-ev-types-list');
             
+            if (typesList) typesList.innerHTML = '';
+            if (ev.color && typesContainer) {
+                const colors = ev.color.split(',');
+                colors.forEach(c => {
+                    const lc = legendColors.find(l => l.color === c);
+                    if (lc) {
+                        typesList.innerHTML += `<div class="flex items-center gap-2"><div class="w-4 h-4 rounded-full shadow-sm" style="background-color: ${lc.color}; border: 1px solid rgba(0,0,0,0.1);"></div><span class="text-sm font-bold text-gray-700 dark:text-gray-200">${lc.name}</span></div>`;
+                    }
+                });
+                typesContainer.classList.remove('hidden');
+            } else if (typesContainer) {
+                typesContainer.classList.add('hidden');
+            }
+
             if (!ev.phone) {
                 if (waBtn) waBtn.classList.add('hidden');
             } else {
@@ -1509,11 +1564,9 @@ async function loadCalendarData() {
             if (ev.obs && ev.obs.trim() !== '') {
                 obsText.innerText = ev.obs;
                 obsContainer.classList.remove('hidden');
-                editBtn.classList.remove('hidden');
             } else {
                 obsText.innerText = '';
                 obsContainer.classList.add('hidden');
-                editBtn.classList.add('hidden');
             }
 
             openModal('event-action-modal');
@@ -1530,12 +1583,12 @@ async function loadCalendarData() {
             const phoneEl = document.getElementById('ev-phone');
 
             nameEl.value = ev.name;
-            nameEl.disabled = true;
-            nameEl.classList.add('opacity-60', 'cursor-not-allowed', 'bg-gray-200', 'dark:bg-gray-600');
+            nameEl.disabled = false;
+            nameEl.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-gray-200', 'dark:bg-gray-600');
 
             phoneEl.value = ev.phone || '';
-            phoneEl.disabled = true;
-            phoneEl.classList.add('opacity-60', 'cursor-not-allowed', 'bg-gray-200', 'dark:bg-gray-600');
+            phoneEl.disabled = false;
+            phoneEl.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-gray-200', 'dark:bg-gray-600');
 
             document.getElementById('ev-obs').value = ev.obs || '';
             document.getElementById('ev-date').value = ev.dateStr;
@@ -2042,22 +2095,37 @@ async function loadCalendarData() {
                 const topPercent = (sIdx / totalSlots) * 100;
                 const heightPercent = (span / totalSlots) * 100;
 
-                const past = isPastEvent(ev.dateStr, ev.timeStr);
-                const customBg = ev.color ? `background-color: ${ev.color}; ${past ? 'opacity: 0.85;' : ''}` : '';
-                const fallbackBg = past ? 'bg-orange-500 hover:bg-orange-600' : 'bg-primary hover:bg-primaryHover';
-                const bgClass = ev.color ? '' : fallbackBg;
-                
                 let typeName = '';
+                let firstColor = ev.color;
+                let hasMultiple = false;
                 if (ev.color) {
-                    const lc = legendColors.find(l => l.color === ev.color);
-                    if (lc && lc.name.toLowerCase() !== 'personalizado') typeName = ` (${lc.name})`;
+                    const colors = ev.color.split(',');
+                    firstColor = colors[0];
+                    if (colors.length > 1) hasMultiple = true;
+                    
+                    const names = [];
+                    colors.forEach(c => {
+                        const lc = legendColors.find(l => l.color === c);
+                        if (lc && lc.name.toLowerCase() !== 'personalizado') {
+                            names.push(lc.name);
+                        }
+                    });
+                    if (names.length > 0) {
+                        typeName = ` (${names.join('/')})`;
+                    }
                 }
 
+                const past = isPastEvent(ev.dateStr, ev.timeStr);
+                const customBg = firstColor ? `background-color: ${firstColor}; ${past ? 'opacity: 0.85;' : ''}` : '';
+                const fallbackBg = past ? 'bg-orange-500 hover:bg-orange-600' : 'bg-primary hover:bg-primaryHover';
+                const bgClass = firstColor ? '' : fallbackBg;
+                
                 html += `
                     <div class="absolute inset-x-[1px] rounded px-1 shadow-sm transition-colors cursor-pointer event-card ${bgClass} flex flex-col justify-center overflow-hidden" 
                          style="top: calc(${topPercent}% + 1px); height: calc(${heightPercent}% - 2px); z-index: 10; ${customBg}; color: white; text-shadow: 0px 1px 4px rgba(0,0,0,0.9);" 
                          onclick="openEventCard(event, '${ev.id}')">
                         <span class="font-extrabold text-[10px] md:text-[11px] leading-tight truncate block text-center tracking-wide">${ev.obs && ev.obs.trim() !== '' ? '<span class="inline-flex items-center justify-center w-3.5 h-3.5 mr-0.5 bg-yellow-400 text-yellow-900 rounded-full text-[10px] font-black border border-yellow-500 align-text-bottom shadow-sm" style="text-shadow: none;">!</span>' : ''}${ev.name}${typeName}</span>
+                        ${hasMultiple ? '<div class="absolute top-0.5 right-0.5 bg-white/40 text-white rounded-full w-[18px] h-[18px] flex items-center justify-center text-[14px] font-black leading-none shadow-md drop-shadow">+</div>' : ''}
                     </div>
                 `;
             });
@@ -2103,16 +2171,31 @@ async function loadCalendarData() {
 
                 dayEvs.slice(0, 3).forEach(ev => {
                     const past = isPastEvent(ev.dateStr, ev.timeStr);
-                    const customBg = ev.color ? `background-color: ${ev.color}; ${past ? 'opacity: 0.85;' : ''}` : '';
-                    const fallbackBg = past ? 'bg-orange-500' : 'bg-primary';
-                    const bgClass = ev.color ? '' : fallbackBg;
-                    
                     let typeName = '';
+                    let firstColor = ev.color;
+                    let hasMultiple = false;
                     if (ev.color) {
-                        const lc = legendColors.find(l => l.color === ev.color);
-                        if (lc && lc.name.toLowerCase() !== 'personalizado') typeName = ` (${lc.name})`;
+                        const colors = ev.color.split(',');
+                        firstColor = colors[0];
+                        if (colors.length > 1) hasMultiple = true;
+                        
+                        const names = [];
+                        colors.forEach(c => {
+                            const lc = legendColors.find(l => l.color === c);
+                            if (lc && lc.name.toLowerCase() !== 'personalizado') {
+                                names.push(lc.name);
+                            }
+                        });
+                        if (names.length > 0) {
+                            typeName = ` (${names.join('/')})`;
+                        }
                     }
-                    html += `<div class="${bgClass} text-[10px] font-extrabold rounded px-1 truncate text-center tracking-wide" style="${customBg}; color: white; text-shadow: 0px 1px 4px rgba(0,0,0,0.9);">${ev.timeStr} ${ev.obs && ev.obs.trim() !== '' ? '<span class="inline-flex items-center justify-center w-3 h-3 mr-0.5 bg-yellow-400 text-yellow-900 rounded-full text-[8px] font-black border border-yellow-500 align-text-bottom" style="text-shadow: none;">!</span>' : ''}${ev.name}${typeName}</div>`;
+
+                    const customBg = firstColor ? `background-color: ${firstColor}; ${past ? 'opacity: 0.85;' : ''}` : '';
+                    const fallbackBg = past ? 'bg-orange-500' : 'bg-primary';
+                    const bgClass = firstColor ? '' : fallbackBg;
+                    
+                    html += `<div class="${bgClass} text-[10px] font-extrabold rounded px-1 truncate text-center tracking-wide relative" style="${customBg}; color: white; text-shadow: 0px 1px 4px rgba(0,0,0,0.9);">${ev.timeStr} ${ev.obs && ev.obs.trim() !== '' ? '<span class="inline-flex items-center justify-center w-3 h-3 mr-0.5 bg-yellow-400 text-yellow-900 rounded-full text-[8px] font-black border border-yellow-500 align-text-bottom" style="text-shadow: none;">!</span>' : ''}${ev.name}${typeName}${hasMultiple ? '<span class="ml-1 text-[13px] font-black text-white bg-white/30 rounded-full px-1.5 shadow-sm drop-shadow-md">+</span>' : ''}</div>`;
                 });
                 if (dayEvs.length > 3) html += `<div class="text-gray-500 text-[9px] font-bold">+${dayEvs.length - 3}</div>`;
                 html += `</div></div>`;
@@ -2455,7 +2538,7 @@ async function loadCalendarData() {
             renderLegendList();
         }
 
-        function renderEventTypeSelector(selectedColor = '') {
+        function renderEventTypeSelector(selectedColorsStr = '') {
             const container = document.getElementById('event-type-selector');
             if (!container) return;
             
@@ -2465,10 +2548,11 @@ async function loadCalendarData() {
                 return;
             }
             
-            if (!selectedColor) selectedColor = legendColors[0].color;
-            document.getElementById('ev-color').value = selectedColor;
+            let selectedColors = selectedColorsStr ? selectedColorsStr.split(',') : [];
+            // Ya no seleccionamos ninguno por defecto
             
-            const lc = legendColors.find(l => l.color === selectedColor);
+            document.getElementById('ev-color').value = selectedColors.join(',');
+            
             const phoneContainer = document.getElementById('ev-phone-container');
             const nameLabel = document.getElementById('ev-name-label');
             if (phoneContainer && nameLabel) {
@@ -2476,22 +2560,34 @@ async function loadCalendarData() {
                 nameLabel.innerText = 'Nombre';
             }
             
-            container.innerHTML = legendColors.map(item => `
-                <button type="button" onclick="selectEventType('${item.color}')" class="px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-sm transition-transform active:scale-95 flex items-center gap-1 opacity-60 hover:opacity-100 ${selectedColor === item.color ? 'ring-2 ring-offset-2 ring-gray-400 opacity-100 scale-105 dark:ring-offset-gray-800' : ''}" style="background-color: ${item.color};">
+            container.innerHTML = legendColors.map(item => {
+                const isSelected = selectedColors.includes(item.color);
+                return `
+                <button type="button" onclick="selectEventType('${item.color}')" class="px-4 py-2 rounded-full text-xs font-bold text-white transition-all duration-200 active:scale-95 flex items-center gap-1 ${isSelected ? 'ring-4 ring-offset-2 ring-gray-800 dark:ring-gray-300 scale-110 shadow-xl z-10' : 'scale-95 shadow-sm hover:scale-100'}" style="background-color: ${item.color};">
                     ${item.name}
                 </button>
-            `).join('');
+            `}).join('');
         }
 
         function selectEventType(color) {
-            renderEventTypeSelector(color);
+            let currentColors = document.getElementById('ev-color').value;
+            let colorsArray = currentColors ? currentColors.split(',') : [];
             
-            const lc = legendColors.find(l => l.color === color);
-            const duration = lc && lc.duration ? lc.duration : parseInt(settings.interval);
+            if (colorsArray.includes(color)) {
+                colorsArray = colorsArray.filter(c => c !== color);
+                // Si deseleccionamos todos, se queda vacío.
+            } else {
+                colorsArray.push(color);
+            }
+            
+            renderEventTypeSelector(colorsArray.join(','));
+            
+            // La duración siempre será el intervalo base (por defecto 30 mins)
+            let totalDuration = parseInt(settings.interval);
             
             const timeStr = document.getElementById('ev-time').value;
             if (timeStr) {
-                const endTimeStr = addMinutesToTime(timeStr, duration);
+                const endTimeStr = addMinutesToTime(timeStr, totalDuration);
                 document.getElementById('ev-endtime').value = endTimeStr;
             }
         }
