@@ -1200,22 +1200,26 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
         }
 
         function isDateHoliday(dateStr, target = 'all') {
+            if (target === 'none') return false;
+            if (holidays.includes(`${dateStr}_none`)) return false;
             if (holidays.includes(dateStr)) return true;
+
+            const hasVero = holidays.includes(`${dateStr}_vero`);
+            const hasNuri = holidays.includes(`${dateStr}_nuri`);
+
+            if (hasVero || hasNuri) {
+                if (target === 'all') return hasVero && hasNuri;
+                if (target === 'vero') return hasVero;
+                if (target === 'nuri') return hasNuri;
+                return false;
+            }
+
             const [y, m, d] = dateStr.split('-');
             const dateObj = new Date(y, m - 1, d);
             const dayOfWeek = dateObj.getDay();
             if (dayOfWeek === 0 || dayOfWeek === 1) return true; // 0 = Domingo, 1 = Lunes
-            if (target === 'none') {
-                    const idxAll = holidays.indexOf(selectedDateForAction);
-                    if (idxAll > -1) holidays.splice(idxAll, 1);
-                    const idxV = holidays.indexOf(`${selectedDateForAction}_vero`);
-                    if (idxV > -1) holidays.splice(idxV, 1);
-                    const idxN = holidays.indexOf(`${selectedDateForAction}_nuri`);
-                    if (idxN > -1) holidays.splice(idxN, 1);
-                } else if (target === 'all') {
-                return holidays.includes(`${dateStr}_vero`) && holidays.includes(`${dateStr}_nuri`);
-            }
-            return holidays.includes(`${dateStr}_${target}`);
+
+            return false;
         }
 
         function selectDuration(type) {
@@ -1826,14 +1830,10 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
             const hasEvents = events.some(e => e.dateStr === selectedDateForAction && (target === 'all' || e.calendar === target || !e.calendar));
             if (hasEvents && target !== 'none') return showToast('Hay eventos este dia, borralos primero.', 'error');
 
-            const idxAll = holidays.indexOf(selectedDateForAction);
-            if (idxAll > -1) holidays.splice(idxAll, 1);
-            
-            const idxVero = holidays.indexOf(`${selectedDateForAction}_vero`);
-            if (idxVero > -1) holidays.splice(idxVero, 1);
-            
-            const idxNuri = holidays.indexOf(`${selectedDateForAction}_nuri`);
-            if (idxNuri > -1) holidays.splice(idxNuri, 1);
+            holidays = holidays.filter(h => h !== selectedDateForAction &&
+                h !== `${selectedDateForAction}_vero` &&
+                h !== `${selectedDateForAction}_nuri` &&
+                h !== `${selectedDateForAction}_none`);
 
             if (target === 'all') {
                 holidays.push(`${selectedDateForAction}_vero`);
@@ -1842,6 +1842,12 @@ Si te ha surgido algún imprevisto, dínoslo y buscamos otro hueco. ¡Te esperam
                 holidays.push(`${selectedDateForAction}_vero`);
             } else if (target === 'nuri') {
                 holidays.push(`${selectedDateForAction}_nuri`);
+            } else if (target === 'none') {
+                const [y, m, d] = selectedDateForAction.split('-');
+                const dayOfWeek = new Date(y, m - 1, d).getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 1) {
+                    holidays.push(`${selectedDateForAction}_none`);
+                }
             }
 
             saveState();
